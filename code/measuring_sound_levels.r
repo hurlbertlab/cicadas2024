@@ -20,6 +20,7 @@ max_cicada_amplitude_eno = max(eno_amp[eno_amp[,1] > .9 & eno_amp[,1] < 1.2, 2])
 peakfreq_eno = eno_amp[eno_amp[,2] == max_cicada_amplitude_eno , 1]
 
 # Running average using stats::filter()
+#  n is the moving window size
 moving_average <- function(x, n = 5) { stats::filter(x, rep(1 / n, n), sides = 2) }
 
 runavg = moving_average(eno_amp[,2], n = 10)

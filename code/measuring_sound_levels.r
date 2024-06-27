@@ -4,6 +4,8 @@ library(seewave)
 library(stringr)
 library(dplyr)
 
+# adsfasdfasf sdlfjdsflkjdf
+
 eno <- readMP3("audiofiles/EnoRiver_0516_Circle3_Clipped.mp3")
 
 # visualizing audiofiles with spectrogram (frequency on y and time on x)

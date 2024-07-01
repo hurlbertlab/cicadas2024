@@ -33,5 +33,8 @@ runavg = moving_average(eno_amp[,2], n = 10)
 eno2 <- readMP3("audiofiles/EnoRiver_0516_Circle3_Clipped.mp3")
 spectro(eno2, flim = c(0,8))
 par(mfrow = c(1,1))
-eno_amp = spec(eno2, flim = c(0, 2))
+eno_amp = spec(eno2, flim = c(1.0, 1.2))
+points(eno_amp[,1], runavg, type = 'l', col = 'red', lwd = 4)
 abline(v=c(1.0, 1.2), col = 'cyan')
+
+#how to save an image-> use pdf() or the export button 

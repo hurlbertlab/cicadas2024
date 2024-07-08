@@ -6,7 +6,7 @@ library(dplyr)
 
 # 
 
-eno <- readMP3("audiofiles/EnoRiver_0516_Circle3_Clipped.mp3")
+eno <- readMP3("audiofiles/EnoRiver/EnoRiver_0516_Circle3_Clipped.mp3")
 
 # visualizing audiofiles with spectrogram (frequency on y and time on x)
 spectro(eno, flim = c(0, 8))
@@ -33,8 +33,16 @@ runavg = moving_average(eno_amp[,2], n = 10)
 eno2 <- readMP3("audiofiles/EnoRiver/EnoRiver_0516_Circle3_Clipped.mp3")
 spectro(eno2, flim = c(0,8))
 par(mfrow = c(1,1))
-eno_amp = spec(eno2, flim = c(1.0, 1.2))
+par(mar = c(5,5,2,2))
+eno_amp = spec(eno2, flim = c(.97, 1.23))
+max_cicada_amplitude_eno = max(eno_amp[eno_amp[,1] > .9 & eno_amp[,1] < 1.2, 2])
+peakfreq_eno = eno_amp[eno_amp[,2] == max_cicada_amplitude_eno , 1]
+moving_average <- function(x, n = 5) { stats::filter(x, rep(1 / n, n), sides = 2) }
+
+runavg = moving_average(eno_amp[,2], n = 10)
+
 points(eno_amp[,1], runavg, type = 'l', col = 'red', lwd = 4)
-abline(v=c(1.0, 1.2), col = 'cyan')
+abline(v=c(1.0, 1.21), col = 'cyan')
 
 #how to save an image-> use pdf() or the export button 
+#eno amp average amplitude for the cicadas frequencies in a specified band

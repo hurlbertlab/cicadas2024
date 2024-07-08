@@ -27,10 +27,10 @@ moving_average <- function(x, n = 5) { stats::filter(x, rep(1 / n, n), sides = 2
 
 runavg = moving_average(eno_amp[,2], n = 10)
 
-#kljhkjgkjh
+#testing 
 
 # Eno River Circle 3 0516
-eno2 <- readMP3("audiofiles/EnoRiver_0516_Circle3_Clipped.mp3")
+eno2 <- readMP3("audiofiles/EnoRiver/EnoRiver_0516_Circle3_Clipped.mp3")
 spectro(eno2, flim = c(0,8))
 par(mfrow = c(1,1))
 eno_amp = spec(eno2, flim = c(1.0, 1.2))

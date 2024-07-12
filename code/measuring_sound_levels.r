@@ -6,7 +6,7 @@ library(dplyr)
 
 # 
 
-eno <- readMP3("audiofiles/EnoRiver/EnoRiver_0516_Circle3_Clipped.mp3")
+eno <- readMP3("audiofiles/eno/eno_0516_circle1_clipped.mp3")
 
 # visualizing audiofiles with spectrogram (frequency on y and time on x)
 spectro(eno, flim = c(0, 8))
@@ -30,7 +30,7 @@ runavg = moving_average(eno_amp[,2], n = 10)
 #testing 
 
 # Eno River Circle 3 0516
-eno2 <- readMP3("audiofiles/EnoRiver/EnoRiver_0516_Circle3_Clipped.mp3")
+eno2 <- readMP3("audiofiles/eno/eno_0516_circle3_clipped.mp3")
 spectro(eno2, flim = c(0,8))
 par(mfrow = c(1,1))
 par(mar = c(5,5,2,2))

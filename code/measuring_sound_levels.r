@@ -46,3 +46,4 @@ abline(v=c(1.0, 1.21), col = 'cyan')
 
 #how to save an image-> use pdf() or the export button 
 #eno amp average amplitude for the cicadas frequencies in a specified band
+#We will calculate the sound level by diving the max cicada amp by the max tone amp

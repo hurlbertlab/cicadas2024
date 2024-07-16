@@ -5,7 +5,8 @@ sites = c("eno", "jmill", "ncbg", "pridge", "unc")
 output = data.frame(site = NULL,
                     file = NULL,
                     max_cicada_amp = NULL,
-                    max_tone_amp = NULL)
+                    max_tone_amp = NULL,
+                    sound_level = NULL)
 
 for (s in sites) {
   
@@ -24,7 +25,8 @@ for (s in sites) {
     tmp = data.frame(site = s,
                      file = f,
                      max_cicada_amp = max_cicada_amplitude,
-                     max_tone_amp = max_tone_amp) 
+                     max_tone_amp = max_tone_amp,
+                     sound_level = max_cicada_amplitude/max_tone_amp) 
     
     output = rbind(output, tmp)
     

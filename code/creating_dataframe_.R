@@ -12,7 +12,7 @@ for (s in sites) {
   
   files = list.files(paste0("audiofiles/", s))  
   
-  for (f in files[1:3]) {
+  for (f in files) {
     
     audiofile <-readMP3(paste0("audiofiles/", s, "/", f)) 
     audiofile_amp = spec(audiofile, flim = c(.97, 1.23))

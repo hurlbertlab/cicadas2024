@@ -59,11 +59,35 @@ pop = bbs %>%
 #Your Turn: use piping to join average pop density by species data with average
 # body mass data by species
 mass2 = mass %>%
-  group_by(Species) %>%
-  summarize(meanM = mean(Mass))
+  group_by(CommonName) %>%
+  summarize(meanM = mean(Mass_g))
 
 pop2 = bbs %>% 
   group_by(SpeciesName) %>%
   summarize(meanN = mean(Abundance)) %>%
-  left_join(mass2,by = c('Species' = 'SpeciesName'))
+  left_join(mass2,by = c('SpeciesName' = 'CommonName'))
 
+pop3 = bbs %>%
+  group_by(SpeciesName) %>%
+  summarize(meanN = mean(Abundance)) %>%
+  left_join(mass, by = c('SpeciesName' = 'CommonName'))
+
+# Your Turn: USe piping to get a dataframe of any warbler species on a route 
+max_warbler = bbs %>%
+  group_by(Route) %>%
+  summarize(maxN = max(Abundance))
+
+#Plotting a model showing relationship between bird body size, distribution, and abundance 
+
+bird_distr = bbs %>%
+  count(SpeciesName)
+
+par(mfrow = c(1,2), mar = c(5, 5, 1, 1))
+plot(x = pop3$Mass_g, y = pop3$meanN)
+plot(x = pop3$Mass_g, y = occupancy$occ)
+
+
+# Add the regression line to the plot
+abline(col = "red")
+x_label <- "Body Size"
+xlab(x_label)

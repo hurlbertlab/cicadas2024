@@ -1,6 +1,6 @@
 setwd("Z:/R Tutorials")
 bbs = read.csv("NC_warblers.csv")
-mass = read.csv("bodysize_abundance_data.csv")
+mass = read.csv("avian_body_masses.csv")
 
 # counting how many sites a species occurs at
 occupancy = count(bbs, SpeciesName)
@@ -54,8 +54,16 @@ birds2 = left_join(mass, birds1, by = c('Species' = 'SpeciesName'))
 #pipe operators eliminate the need for intermediate objects (ex: bbs_by_species)
 pop = bbs %>%
   group_by(SpeciesName) %>%
-  summarize(meanN = mean(Abundance)) %>%
+  summarize(meanN = mean(Abundance))
 
 #Your Turn: use piping to join average pop density by species data with average
 # body mass data by species
+mass2 = mass %>%
+  group_by(Species) %>%
+  summarize(meanM = mean(Mass))
+
 pop2 = bbs %>% 
+  group_by(SpeciesName) %>%
+  summarize(meanN = mean(Abundance)) %>%
+  left_join(mass2,by = c('Species' = 'SpeciesName'))
+

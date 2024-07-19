@@ -54,11 +54,8 @@ birds2 = left_join(mass, birds1, by = c('Species' = 'SpeciesName'))
 #pipe operators eliminate the need for intermediate objects (ex: bbs_by_species)
 pop = bbs %>%
   group_by(SpeciesName) %>%
-  summarize(meanN = mean(Abundance))
+  summarize(meanN = mean(Abundance)) %>%
 
 #Your Turn: use piping to join average pop density by species data with average
 # body mass data by species
-mass2 = mass %>%
-  group_by(Species) %>%
-  summarize(massN = mean(Mass)) %>%
-  left_join(mass2,pop, by = c('Species' = 'SpeciesName'))
+pop2 = bbs %>% 

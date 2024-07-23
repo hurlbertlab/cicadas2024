@@ -2,7 +2,7 @@
 sites = c("eno", "jmill", "ncbg", "pridge", "unc")
 
 
-output = data.frame(site = NULL,
+cicada_output = data.frame(site = NULL,
                     file = NULL,
                     max_cicada_amp = NULL,
                     max_tone_amp = NULL,
@@ -32,5 +32,4 @@ for (s in sites) {
     
   }
 }
-
 

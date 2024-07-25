@@ -18,24 +18,24 @@ birdPred = df %>%
   summarize(numBirdStrikes = sum(Bird),
             numClayCats = n(),
             pctBird = 100*numBirdStrikes/numClayCats) %>%
-  mutate(jd = yday(DeployDate))
+  mutate(jd = yday(DeployDate)+4)
     
   
 plot(birdPred$jd[birdPred$Name == "Prairie Ridge Ecostation"], birdPred$pctBird[birdPred$Name == "Prairie Ridge Ecostation"], xlab = "Julian day", 
-     ylab = "% Bird Strikes", ylim = c(0, 60), xlim = c(130, 185), type = 'b', 
-     col = 'red', cex = 2, pch = 16, lwd = 3)
+     ylab = "% Bird Strikes", ylim = c(0, 60), xlim = c(135, 185), type = 'b', 
+     col = 'red', cex = 1, pch = 25, lwd = 2)
 
 points(birdPred$jd[birdPred$Name == "NC Botanical Garden"], birdPred$pctBird[birdPred$Name == "NC Botanical Garden"], 
-       type = 'b', col = 'aquamarine', pch = 17, cex = 2, lwd = 3, lty = 'dashed')
+       type = 'b', col = 'green2', pch = 17, cex = 1, lwd = 2)
 
 points(birdPred$jd[birdPred$Name == "Triangle Land Conservancy - Johnston Mill Nature Preserve"], birdPred$pctBird[birdPred$Name == "Triangle Land Conservancy - Johnston Mill Nature Preserve"], 
-       type = 'b', col = 'darkgoldenrod2', pch = 11, cex = 2, lwd = 3)
+       type = 'b', col = 'darkgoldenrod', pch = 19, cex = 1, lwd = 2)
 
 points(birdPred$jd[birdPred$Name == "Eno River State Park"], birdPred$pctBird[birdPred$Name == "Eno River State Park"], 
-       type = 'b', col = 'magenta', pch = 21, cex = 2, lwd = 3, lty = 'dotted')
+       type = 'b', col = 'magenta', pch = 21, cex = 1, lwd = 2)
 
 points(birdPred$jd[birdPred$Name == "UNC Chapel Hill Campus"], birdPred$pctBird[birdPred$Name == "UNC Chapel Hill Campus"], 
-       type = 'b', col = 'navy', pch = 6, cex = 2, lwd = 3, lty = 'dotdash')
+       type = 'b', col = 'navy', pch = 18, cex = 1.25, lwd = 2)
 
 
 legend("topright", legend = c("Prairie Ridge Ecostation", 
@@ -43,10 +43,23 @@ legend("topright", legend = c("Prairie Ridge Ecostation",
                              "Eno River State Park",
                              "UNC Chapel Hill Campus",
                              "Johnston Mill"),
-       col = c("red", "aquamarine", "magenta", "navy", "darkgoldenrod2"),
-       pch = c(16, 17, 21, 6, 11),
-       lwd = 3,
+       col = c("red", "green2", "magenta", "navy", "darkgoldenrod"),
+       pch = c(25, 17, 21, 18, 19),
+       lwd = 2,
        cex = 1)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

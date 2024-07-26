@@ -1,12 +1,11 @@
-
 sites = c("eno", "jmill", "ncbg", "pridge", "unc")
 
 
 cicada_output = data.frame(site = NULL,
-                    file = NULL,
-                    max_cicada_amp = NULL,
-                    max_tone_amp = NULL,
-                    sound_level = NULL)
+                           file = NULL,
+                           max_cicada_amp = NULL,
+                           max_tone_amp = NULL,
+                           sound_level = NULL)
 
 for (s in sites) {
   
@@ -18,7 +17,7 @@ for (s in sites) {
     audiofile_amp = spec(audiofile, flim = c(.97, 1.23))
     max_cicada_amplitude = max(audiofile_amp[audiofile_amp[,1] > .9 & audiofile_amp[,1] < 1.2, 2])
     peakfreq_audiofile = audiofile_amp[audiofile_amp[,2] == max_cicada_amplitude , 1]
-    max_tone_amp = max(audiofile_amp[audiofile_amp[,1] > .78 & audiofile_amp[,1] < .90, 2])
+    max_tone_amp = max(audiofile_amp[audiofile_amp[,1] > .76 & audiofile_amp[,1] < .85, 2])
     # read in audiofile
     # figure out max amplitude
     
@@ -32,4 +31,3 @@ for (s in sites) {
     
   }
 }
-

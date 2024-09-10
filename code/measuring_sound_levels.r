@@ -39,9 +39,10 @@ max_cicada_amplitude_eno = max(eno_amp[eno_amp[,1] > .9 & eno_amp[,1] < 1.2, 2])
 peakfreq_eno = eno_amp[eno_amp[,2] == max_cicada_amplitude_eno , 1]
 moving_average <- function(x, n = 5) { stats::filter(x, rep(1 / n, n), sides = 2) }
 
-runavg = moving_average(eno_amp[,2], n = 10)
+runavg = moving_average(eno_amp[,2], n = 100)
+max(runavg[eno_amp[,1] > .9 & eno_amp[,1] < 1.2], na.rm = T)
 
-points(eno_amp[,1], runavg, type = 'l', col = 'red', lwd = 4)
+points(eno_amp[,1], runavg, type = 'l', col = 'salmon', lwd = 4)
 abline(v=c(1.0, 1.21), col = 'cyan')
 
 #how to save an image-> use pdf() or the export button 

@@ -44,7 +44,11 @@ max(runavg[eno_amp[,1] > .9 & eno_amp[,1] < 1.2], na.rm = T)
 
 points(eno_amp[,1], runavg, type = 'l', col = 'salmon', lwd = 4)
 abline(v=c(1.0, 1.21), col = 'cyan')
-
+#moving_average <- function(x, n = 5) { stats::filter(x, rep(1 / n, n), sides = 2) }
+#runavg = moving_average(audiofile_amp[,2], n = 100)
+#max(runavg[audiofile_amp[,1] > .9 & eno_amp[,1] < 1.2], na.rm = T)
+#points(audiofile_amp[,1], runavg, type = 'l', col = 'salmon', lwd = 4)
+#abline(v=c(1.0, 1.21), col = 'cyan')
 #how to save an image-> use pdf() or the export button 
 #eno amp average amplitude for the cicadas frequencies in a specified band
 #We will calculate the sound level by diving the max cicada amp by the max tone amp

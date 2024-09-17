@@ -1,5 +1,5 @@
-library(tuneR)
 library(warbleR)
+library(tuneR)
 library(seewave)
 library(stringr)
 library(dplyr)
@@ -21,7 +21,7 @@ for (s in sites) {
   
   for (f in files) {
     audiofile <-readMP3(paste0("audiofiles/", s, "/", f)) 
-    audiofile_amp = spec(audiofile, flim = c(.97, 1.23))
+    audiofile_amp = seewave::spec(audiofile, flim = c(.97, 1.23))
     max_cicada_amplitude = max(audiofile_amp[audiofile_amp[,1] > .9 & audiofile_amp[,1] < 1.2, 2])
     peakfreq_audiofile = audiofile_amp[audiofile_amp[,2] == max_cicada_amplitude , 1]
     max_tone_amp = max(audiofile_amp[audiofile_amp[,1] > .78 & audiofile_amp[,1] < .90, 2])
@@ -40,7 +40,7 @@ for (s in sites) {
                      max_cicada_amp = max_cicada_amplitude,
                      max_running_avg = max_runavg,
                      max_tone_amp = max_tone_amp,
-                     sound_level = max_cicada_amplitude/max_tone_amp) 
+                     sound_level = max_runavg/max_tone_amp) 
     
     cicada_output = rbind(cicada_output, tmp)
     

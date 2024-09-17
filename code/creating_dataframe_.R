@@ -45,10 +45,11 @@ for (s in sites) {
     
   }
 }
+dev.off() 
 
 cicada_output <- 
   cicada_output %>%
   filter(site != "ex")
-dev.off() 
+
 
 mean(runavg, na.rm = TRUE)

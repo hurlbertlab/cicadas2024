@@ -31,6 +31,7 @@ for (s in sites) {
     points(audiofile_amp[,1], runavg, type = 'l', col = 'salmon', lwd = 4)
     abline(v=c(1.0, 1.21), col = 'cyan')
     title(main = paste(s,f))
+
     # read in audiofile
     # figure out max amplitude
     
@@ -53,3 +54,4 @@ cicada_output <-
 
 
 mean(runavg, na.rm = TRUE)
+

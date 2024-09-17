@@ -54,4 +54,4 @@ cicada_output <-
 
 
 mean(runavg, na.rm = TRUE)
-
+write.csv(cicada_output,"data/cicada_output.csv",row.names= FALSE)

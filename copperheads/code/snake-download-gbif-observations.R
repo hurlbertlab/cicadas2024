@@ -63,4 +63,4 @@ copperheads <- serpentes %>%
 #table(copperheads$year)
 
 write.csv(serpentes, "copperheads/data/snakes/inat-serpentes.csv", row.names = FALSE)
-
+zip(zipfile = "copperheads/data/snakes/inat-serpentes.zip", files = "copperheads/data/snakes/inat-serpentes.csv")

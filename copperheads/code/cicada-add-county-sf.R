@@ -5,6 +5,7 @@
 library(sf)
 library(dplyr)
 
+#read in cicada data
 gdb_path = "copperheads/data/cicada/S_USA.Periodical_Cicada_Brood.gdb"
 layer_name = "Periodical_Cicada_Brood"
 
@@ -19,17 +20,35 @@ cicada <- st_read(dsn = gdb_path) %>%
   ))
 "The Brood tabular information was designed to be joined to County boundaries and to create map services for the public."
 
+#add county boundaries
+  #install.packages("tigris")
+  library(tigris)
+  
+  counties_sf <- tigris::counties() %>%
+    select(-CSAFP, -CBSAFP, -METDIVFP, -FUNCSTAT)
+  
+  c <- left_join(cicada, counties_sf, by = c("ST_CNTY_CODE" = "GEOID"))
+  
+  assertthat::assert_that(any(is.na(c) == FALSE))
+  #great, worked perfectly. 
+  
+  plot(c$geometry)
+  #perfection!
+  
+  #save the updated cicada that now has county information added.
+  st_write(c, dsn = "copperheads/data/cicada/periodical_cicada_with_county.shp", layer = "Periodical_Cicada_Brood_W_County2", driver = "OpenFileGDB")
+
 #one-time process of adding county boundaries, no longer needed.
       #load in the county boundaries for the whole US
       #downloaded from: https://www.sciencebase.gov/catalog/item/5eaa545982cefae35a22231f
       #path = "copperheads/data/GovernmentUnits_National_GDB.gdb"
       #bigmap <- st_read(dsn = path, layer = "GU_CountyOrEquivalent")
-      
+
       #c <- left_join(cicada, bigmap, by = c("ST_CNTY_CODE" = "STCO_FIPSCODE"))
-      
+
       #save the updated cicada that now has county information added.
       #st_write(c, dsn = "copperheads/data/cicada/periodical_cicada_with_county.gdb", layer = "Periodical_Cicada_Brood_W_County", driver = "OpenFileGDB")
-      
+
       #plot(c) #yep, works!
 #doesn't look quite the same as from the oak paper, but I think it's an artifact of the crs. If that turns out to be wrong, then we need another county boundaries to work from.
 

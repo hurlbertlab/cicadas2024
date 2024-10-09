@@ -13,12 +13,12 @@ To what degree the emergence of a periodical cicada brood influences copperhead 
 Steps are as follows:
 
 - download iNat data on all snake observations in all years within the range
-of the eastern copperhead. For ease of download (although! note this may increase the processing time of the trimming step) could do all of North America
- quality_grade=research&identifications=any&captive=false&geoprivacy=open&iconic_taxa%5B%5D=Reptilia&swlat=30&swlng=-100&nelat=45&nelng=-70&taxon_id=85553&verifiable=true
+of the eastern copperhead. 
  Downloaded from GBIF, then filtered to just snakes
- returns 500,000 observations
+ returns 380,000 observations
 - download data on the location of periodicial cicada broods (might be available from Koenig et al. 2023) (done)
 - filter snake data to within the counties that have periodical cicada broods
+- associate snake location data with a county
 - for both each county and each overall brood emergence area, get the proportion of all snake observations that are copperheads in each year
 - probably ought to filter to only after 2008 as this is when there are about a thousand snake observations a year, seems like a good minimum bound. If it needs to be moved up, 2013 is the first year over 100 copperheads were observed. 
 - take a casual look at this data to see if there's anything interesting that looks like it might be going on

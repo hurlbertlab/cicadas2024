@@ -1,7 +1,26 @@
 #creating data frame for average confidence level of each bird species
 library(dplyr)
 
-#sites = c("eno", "jmill", "ncbg", "pridge", "unc")
+
+sites = c("eno", "jmill", "ncbg", "pridge", "unc")
+
+confidence_levels = data.frame(site = NULL,
+                               file = NULL,
+                               start = NULL,
+                               end = NULL,
+                               scientific_name = NULL, 
+                               common_name = NULL,
+                               confidence = NULL)
+
+for(s in 1:length(sites)) {
+  
+ files <- list.files(paste0("data/birdcallsdata/", sites[s]))
+  
+  for(f in 1:length(files)) {
+    temp_file <- read.csv(files[f])
+    confidence_levels <- rbind(condfidence_levels, temp_file)
+  }
+}
 
 #confidence_levels = data.frame(site = "ex",
                                file = "ex",
@@ -11,9 +30,9 @@ library(dplyr)
                                common_name = "ex",
                                confidence = 1)
 
-#for (s in sites) {
+for (s in sites) {
   
-  files = list.files(paste0("data/birdcallsdata"))
+  files = list.files(paste0("data/birdcallsdata", sites[s]))
   
   for (f in files)
     file <- read.csv(f)

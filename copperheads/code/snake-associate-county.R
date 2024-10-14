@@ -6,41 +6,29 @@ library(sf)
 library(dplyr)
 library(stringr)
 
+#---------
+# load in data
+#---------
 #load in snake data
-snake1 <- read.csv("copperheads/data/snakes/inat-snakes1.csv") %>%
-  select(-place_county_name, -place_state_name, -place_country_name)
-snake2 <- read.csv("copperheads/data/snakes/inat-snakes2.csv") %>%
-  select(-observed_on_string, -sound_url,-oauth_application_id)
-snake3 <- read.csv("copperheads/data/snakes/inat-snakes3.csv") %>%
-  select(-observed_on_string, -sound_url,-oauth_application_id)
-#combine snakes
-snakes <- rbind(snake1,snake2)
-snakes <- rbind(snakes,snake3) #445,000 rows
-#rm
-rm(snake1,snake2,snake3) 
-#gbif download
-#may need to be unzipped from "copperheads/data/snakes/inat-serpentes.zip" first
-#snakes <- read.csv("copperheads/data/snakes/inat-serpentes.csv") #381,000 rows
-
-#add in year information
-snakes <- snakes %>%
-  mutate(year = substr(observed_on, start = 1, stop = 4))
+snakes <- read.csv("copperheads/data/snakes/inat-snakes.csv") %>%
+  mutate(year = substr(observed_on, start = 1, stop = 4)) #add in year information
 
 #load in copperheads
 copperheads <- read.csv("copperheads/data/snakes/inat-copperheads.csv")
-#confirm all copperheads in snake data
-miss_copper <- anti_join(copperheads, snakes, by = "id") #about 3,801 copperhead observations that are NOT included.... where are they I wonder? let's exclude Texas because no cicadas in Texas, similarly we can exclude Florida
-miss_copper <- miss_copper %>%
-  mutate(txfl = str_detect(string = place_guess, pattern = "Texas|Florida|TX|FL")) %>%
-  filter(txfl == FALSE) #great, that cuts it down by to 2522 obs
-
-table(miss_copper$geoprivacy)
-#ah, these are all records with obscured geoprivacy. Despite that do we have a lat/lon? Yes, but these aren't acurate enough to say where within the states these individuals were observed. The 41 observations with blank geoprivary (eg. not obscured or private), are below 30 latitude and not within cicada area anyway. Okay, confirmed that we have all the copperheads we want within the snakes df.
 
 #load in cicada and county data
 cicada <- st_read(dsn = "copperheads/data/cicada/periodical_cicada_with_county.gdb")
 
 emergence_years <- read.csv("copperheads/data/cicada/cicada_emergence_years.csv")
+
+#gbif download
+#may need to be unzipped from "copperheads/data/snakes/inat-serpentes.zip" first
+#snakes <- read.csv("copperheads/data/snakes/inat-serpentes.csv") #381,000 rows
+
+
+#---------
+# add geometry
+#---------
 
 #GBIF turn the snake lat/lon into a point eg. make geometry
 #snakes_geom <- st_as_sf(snakes, coords = c('decimalLongitude', 'decimalLatitude'), crs = st_crs(cicada))
@@ -89,6 +77,8 @@ snakes_year_county <-
          perc_copper = ifelse(is.na(perc_copper), 0, perc_copper))
 
 write.csv(snakes_year_county, "copperheads/data/snakes/snakes_county_year.csv", row.names = FALSE)
+
+snakes_year_county <- read.csv("copperheads/data/snakes/snakes_county_year.csv")
 
 plot(
   x = snakes_year_county$perc_copper,

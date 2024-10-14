@@ -50,3 +50,6 @@ rsconnect/
 
 #.csv files that are too big for github
 *inat-serpentes.csv
+*inat-snakes1.csv
+*inat-snakes2.csv
+*inat-snakes3.csv

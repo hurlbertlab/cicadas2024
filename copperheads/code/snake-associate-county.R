@@ -115,6 +115,8 @@ snakes_year_brood <-
   #let's filter to brood years that have a minimum number of snakes observations, let's say at least 20 snakes had to be seen within the whole brood area.
   filter(n_snakes >= 20)
 
+write.csv(snakes_year_brood, "copperheads/data/snakes/snakes_year_brood.csv", row.names = FALSE)
+
 #plot 
 my_bar <- boxplot(perc_copper ~ emergence_year,
         data = snakes_year_brood,

@@ -11,7 +11,21 @@ cicada_noise<- cicada_noise%>%
     str_starts(date, "06") ~ 152 + as.numeric(substr(date, 3, 4)),
     str_starts(date, "07") ~ 182 + as.numeric(substr(date, 3, 4))
   ))
-    
-    #May first is 122, so 0501 is 112, case_when if starts with 05, give it 121 + the second number eg. 15
-    #June first is 153, case_when if it starts with 06, give it 152+ the second number eg. 15
-    
+
+#Plotting eno River    
+plot(cicada_noise$jd[cicada_noise$site == "eno"], cicada_noise$sound_level[cicada_noise$site == "eno"], xlab = "Julian Day", ylab = "Cicada Amplitude", ylim = c(0, 2.0), xlim = c(130,185), type = 'b', col = 'red', cex = 1, pch = 25, lwd = 2)
+
+points(cicada_noise$jd[cicada_noise$site == "ncbg"], cicada_noise$sound_level[cicada_noise$site == "ncbg"], type = 'b', col = 'magenta', pch = 17, cex = 1, lwd = 2)
+
+points(cicada_noise$jd[cicada_noise$site == "pridge"], cicada_noise$sound_level[cicada_noise$site == "pridge"], type = 'b', col = 'blue', pch = 17, cex = 1, lwd = 2)
+
+points(cicada_noise$jd[cicada_noise$site == "jmill"], cicada_noise$sound_level[cicada_noise$site == "jmill"], type = 'b', col = 'green', pch = 17, cex = 1, lwd = 2)
+
+legend("topright", legend = c("Eno River State Park", 
+                              "NC Botanical Garden",
+                              "Prarie Ridge Ecostation",
+                              "Johnston Mill"),
+       col = c("red", "magenta", "blue", "green"),
+       pch = c(17, 17, 17, 17),
+       lwd = 2,
+       cex = 1)

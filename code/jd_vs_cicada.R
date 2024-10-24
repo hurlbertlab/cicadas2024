@@ -13,7 +13,7 @@ cicada_noise<- cicada_noise%>%
   ))
 
 #Plotting eno River    
-plot(cicada_noise$jd[cicada_noise$site == "eno"], cicada_noise$sound_level[cicada_noise$site == "eno"], xlab = "Julian Day", ylab = "Cicada Amplitude", ylim = c(0, .7), xlim = c(130,185), type = 'b', col = 'red', cex = 1, pch = 25, lwd = 2)
+plot(cicada_noise$jd[cicada_noise$site == "eno"], cicada_noise$sound_level[cicada_noise$site == "eno"], xlab = "Julian Day", ylab = "Cicada Amplitude", ylim = c(0, .4), xlim = c(130,185), type = 'b', col = 'red', cex = 1, pch = 25, lwd = 2)
 
 points(cicada_noise$jd[cicada_noise$site == "ncbg"], cicada_noise$sound_level[cicada_noise$site == "ncbg"], type = 'b', col = 'magenta', pch = 17, cex = 1, lwd = 2)
 

@@ -20,9 +20,3 @@ r2 <- .88
 plot(x = calls$temp, y = calls$max_cicada_amp)
 abline(m1)
 
-notes <- read.csv("data/CC!samplingnotes.csv") %>%
-  filter(str_detect(date, "2024")) %>%
-  mutate(temp = case_when(
-    str_detect(notes, "pattern you want" ~ 70)
-  ))
-

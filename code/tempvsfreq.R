@@ -1,5 +1,11 @@
 #plotting temperature vs. frequency
 #adding temperature to dataframe 
+library(warbleR)
+library(tuneR)
+library(seewave)
+library(stringr)
+library(dplyr)
+
 notes <- read.csv("data/CC!samplingnotes.csv") %>%
   filter(str_detect(date, "2024")) %>% 
   mutate(site = recode(site,
@@ -37,11 +43,6 @@ write.csv(notes, "data/noteswtemp.csv", row.names = FALSE)
 
 # creating data frame with frequencies of cicadas
 #peakfreq_eno = eno_amp[eno_amp[,2] == max_cicada_amplitude_eno , 1]
-library(warbleR)
-library(tuneR)
-library(seewave)
-library(stringr)
-library(dplyr)
 
 sites = c("eno", "jmill", "ncbg", "pridge", "unc")
 
@@ -78,6 +79,7 @@ mean(runavg, na.rm = TRUE)
 write.csv(cicada_frequency,"data/cicada_frequency.csv",row.names= FALSE)
 
 #joining cicada_frequency and temperature values for each day 
-temp_data <- read.csv("data/noteswtemp.csv")
+freq <- read.csv("data/cicada_frequency.csv")%>%
+  filter(str_select)
 
 #need to figure out how to get 

@@ -21,6 +21,26 @@ points(cicada_noise$jd[cicada_noise$site == "pridge"], cicada_noise$sound_level[
 
 points(cicada_noise$jd[cicada_noise$site == "jmill"], cicada_noise$sound_level[cicada_noise$site == "jmill"], type = 'b', col = 'green', pch = 17, cex = 1, lwd = 2)
 
+points(cicada_noise$jd[cicada_noise$site == "unc"], cicada_noise$sound_level[cicada_noise$site == "unc"], type = 'b', col = 'orange', pch = 17, cex = 1, lwd = 2)
+legend("topright", legend = c("Eno River State Park", 
+                              "NC Botanical Garden",
+                              "Prarie Ridge Ecostation",
+                              "Johnston Mill"),
+       col = c("red", "magenta", "blue", "green"),
+       pch = c(17, 17, 17, 17),
+       lwd = 2,
+       cex = 1)
+
+
+plot(cicada_noise$jd[cicada_noise$site == "eno"], cicada_noise$max_running_avg[cicada_noise$site == "eno"], xlab = "Julian Day", ylab = "Cicada Amplitude", ylim = c(0, .4), xlim = c(130,185), type = 'b', col = 'red', cex = 1, pch = 25, lwd = 2)
+
+points(cicada_noise$jd[cicada_noise$site == "ncbg"], cicada_noise$max_running_avg[cicada_noise$site == "ncbg"], type = 'b', col = 'magenta', pch = 17, cex = 1, lwd = 2)
+
+points(cicada_noise$jd[cicada_noise$site == "pridge"], cicada_noise$max_running_avg[cicada_noise$site == "pridge"], type = 'b', col = 'blue', pch = 17, cex = 1, lwd = 2)
+
+points(cicada_noise$jd[cicada_noise$site == "jmill"], cicada_noise$max_running_avg[cicada_noise$site == "jmill"], type = 'b', col = 'green', pch = 17, cex = 1, lwd = 2)
+
+points(cicada_noise$jd[cicada_noise$site == "unc"], cicada_noise$max_running_avg[cicada_noise$site == "unc"], type = 'b', col = 'orange', pch = 17, cex = 1, lwd = 2)
 legend("topright", legend = c("Eno River State Park", 
                               "NC Botanical Garden",
                               "Prarie Ridge Ecostation",

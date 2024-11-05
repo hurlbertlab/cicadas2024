@@ -1,4 +1,5 @@
-#Script plotting julian day versus cicada amplitude
+#creating inputated value of missing prarie ridge day 
+
 library(dplyr)
 library(stringr)
 library(lubridate)
@@ -26,10 +27,10 @@ pridgerow <- cicada_noise %>%
   mutate(x_new = 143,
          y_new = mean_noise) %>%
   select(-jd)
-    
+
 get_inputed_value <- function(df = algebra_inputation,
-                 chosen_site = "eno",
-                 x_new = 143) {
+                              chosen_site = "eno",
+                              x_new = 143) {
   
   df <- df %>%
     filter(site == chosen_site)
@@ -40,8 +41,8 @@ get_inputed_value <- function(df = algebra_inputation,
   y2 = df$mean_noise[df$jd == x2]
   
   y_new = y1 + (y2-y1) * (x_new - x1) / (x2 - x1)
-
- #return
+  
+  #return
   y_new
   
 }
@@ -71,22 +72,3 @@ write.csv(algebra_inputation, "data/inputated_values.csv", row.names = FALSE)
 #add back in pridge
 
 #now you have all the values for date 143, which represents our "single value" of cicada noise that can characterize each site. 
-
-plot(cicada_noise$jd[cicada_noise$site == "eno"], cicada_noise$mean_noise[cicada_noise$site == "eno"], xlab = "Julian Day", ylab = "Cicada Amplitude", ylim = c(0, .20), xlim = c(130,185), type = 'b', col = 'palevioletred4', cex = 1, pch = 25, lwd = 2)
-
-points(cicada_noise$jd[cicada_noise$site == "ncbg"], cicada_noise$mean_noise[cicada_noise$site == "ncbg"], type = 'b', col = 'thistle4', pch = 17, cex = 1, lwd = 2)
-
-points(cicada_noise$jd[cicada_noise$site == "pridge"], cicada_noise$mean_noise[cicada_noise$site == "pridge"], type = 'b', col = 'steelblue3', pch = 17, cex = 1, lwd = 2)
-
-points(cicada_noise$jd[cicada_noise$site == "jmill"], cicada_noise$mean_noise[cicada_noise$site == "jmill"], type = 'b', col = 'springgreen1', pch = 17, cex = 1, lwd = 2)
-
-points(cicada_noise$jd[cicada_noise$site == "unc"], cicada_noise$mean_noise[cicada_noise$site == "unc"], type = 'b', col = 'cyan', pch = 17, cex = 1, lwd = 2)
-legend("topright", legend = c("Eno River State Park", 
-                              "NC Botanical Garden",
-                              "Prarie Ridge Ecostation",
-                              "Johnston Mill",
-                              "UNC Chapel Hill Campus"),
-       col = c("palevioletred4", "thistle4", "steelblue3", "springgreen1", 'cyan'),
-       pch = c(17, 17, 17, 17),
-       lwd = 2,
-       cex = 1)

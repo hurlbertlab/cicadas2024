@@ -1,0 +1,5 @@
+"","estimate","std.error","statistic","p.value","name","value","common_name"
+"1",0.785404087528032,0.0657047748542016,11.953531372276,2.85016962877106e-18,"term","(Intercept)","Blue-gray Gnatcatcher"
+"2",-0.201185458891109,0.0917322595944941,-2.19318110968221,0.0317695337178506,"term","Distance50m","Blue-gray Gnatcatcher"
+"3",-0.732368961320651,0.926890769600459,-0.790135132790611,0.432236569347415,"term","mean_noise","Blue-gray Gnatcatcher"
+"4",-1.99509392135834,1.36487244234804,-1.46174386664743,0.148486024856521,"term","Distance50m:mean_noise","Blue-gray Gnatcatcher"

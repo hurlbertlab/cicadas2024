@@ -1,0 +1,5 @@
+"","estimate","std.error","statistic","p.value","name","value","common_name"
+"1",0.671356282829446,0.102732552526112,6.53499077284974,1.01986971233647e-08,"term","(Intercept)","Yellow-billed Cuckoo"
+"2",-0.206521482620894,0.143427767586783,-1.43989888496267,0.154552372063732,"term","Distance50m","Yellow-billed Cuckoo"
+"3",0.984251682222699,1.4492379722059,0.679151182275857,0.499381579115631,"term","mean_noise","Yellow-billed Cuckoo"
+"4",-1.61176872659526,2.13404322876234,-0.755265265891555,0.452736768117494,"term","Distance50m:mean_noise","Yellow-billed Cuckoo"

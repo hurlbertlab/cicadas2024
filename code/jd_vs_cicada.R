@@ -3,76 +3,53 @@ library(dplyr)
 library(stringr)
 library(lubridate)
 
-cicada_noise = read.csv(paste0("data/cicada_output.csv"))  
-cicada_noise<- cicada_noise%>%
+cicada_noise = read.csv(paste0("data/cicada_output.csv"))  %>%
   mutate(date = str_extract(file, pattern = "[0-9][0-9][0-9][0-9]"))%>% 
   mutate(jd = case_when(
     str_starts(date, "05") ~ 121 + as.numeric(substr(date, 3, 4)),
     str_starts(date, "06") ~ 152 + as.numeric(substr(date, 3, 4)),
     str_starts(date, "07") ~ 182 + as.numeric(substr(date, 3, 4))))%>%
-  group_by(site, jd)%>%
+  group_by(site, jd) %>%
+  mutate(std_dev = sd(max_running_avg)) %>%
+  ungroup() %>%
+  group_by(site, jd, std_dev)%>%
   summarize(mean_noise = mean(max_running_avg, na.rm =))
 
-algebra_inputation <- cicada_noise %>%
-  filter(jd > 136,
-         jd < 150) %>%
-  filter(!(site == "eno" & jd == 137)) %>%
-  filter(site != "pridge") #filtering out prarie ridge bc its the date we're imputing to
+#cicada_std_dev = read.csb(paste0(data/cicada_output.csv))
+#cicada_dev <- cicada_std_dev %>%
 
-pridgerow <- cicada_noise %>%
-  filter(jd > 136,
-         jd < 150,
-         site == "pridge") %>%
-  mutate(x_new = 143,
-         y_new = mean_noise) %>%
-  select(-jd)
-    
-get_inputed_value <- function(df = algebra_inputation,
-                 chosen_site = "eno",
-                 x_new = 143) {
-  
+
+plot(cicada_noise$jd[cicada_noise$site == "eno"], cicada_noise$mean_noise[cicada_noise$site == "eno"], xlab = "Julian Day", ylab = "Cicada Amplitude", ylim = c(0, .20), xlim = c(130,185), type = 'b', col = 'palevioletred4', cex = 1, pch = 25, lwd = 2)
+
+
+#this function adds the standard deviation to a plot
+add_standard_deviation <- function(df = cicada_noise,
+                                   chosen_site = "eno", 
+                                   color = "palevioletred4") {
+  #filter to just the chosen site
   df <- df %>%
     filter(site == chosen_site)
   
-  x1 = min(df$jd)
-  x2 = max(df$jd)
-  y1 = df$mean_noise[df$jd == x1]
-  y2 = df$mean_noise[df$jd == x2]
-  
-  y_new = y1 + (y2-y1) * (x_new - x1) / (x2 - x1)
+  #add segments, mean +- standard deviation
+  segments(df$jd, #x-position
+           df$mean_noise - df$std_dev, #y-position
+           df$jd,
+           df$mean_noise + df$std_dev,
+           col = color) 
 
- #return
-  y_new
-  
 }
 
+add_standard_deviation()
 
-algebra_inputation$y_new <- 
-  c(get_inputed_value(chosen_site = "eno"),
-    get_inputed_value(chosen_site = "eno"),
-    get_inputed_value(chosen_site = "jmill"),
-    get_inputed_value(chosen_site = "jmill"),
-    get_inputed_value(chosen_site = "ncbg"),
-    get_inputed_value(chosen_site = "ncbg"),
-    get_inputed_value(chosen_site = "unc"),
-    get_inputed_value(chosen_site = "unc"))
 
-#cleanup
-algebra_inputation <- 
-  algebra_inputation %>%
-  mutate(x_new = 143) %>%
-  distinct(site, y_new, x_new) %>%
-  #add back in pridge
-  bind_rows(pridgerow) %>%
-  #give ynew and xnew better names
-  rename(jd = x_new,
-         calculated_mean_noise = y_new)
-write.csv(algebra_inputation, "data/inputated_values.csv", row.names = FALSE)
-#add back in pridge
+segments(cicada_noise$jd[cicada_noise$site == "eno"],
+         cicada_noise$mean_noise)
 
-#now you have all the values for date 143, which represents our "single value" of cicada noise that can characterize each site. 
-
-plot(cicada_noise$jd[cicada_noise$site == "eno"], cicada_noise$mean_noise[cicada_noise$site == "eno"], xlab = "Julian Day", ylab = "Cicada Amplitude", ylim = c(0, .20), xlim = c(130,185), type = 'b', col = 'palevioletred4', cex = 1, pch = 25, lwd = 2)
+arrows(cicada_noise$jd[cicada_noise$site == "eno"], 
+       cicada_noise$mean_noise[cicada_noise$site == "eno"] - cicada_output$std_dev[cicada_output$site == "eno"],
+       cicada_noise$jd[cicada_noise$site == "eno"], 
+       cicada_noise$mean_noise[cicada_noise$site == "eno"] + cicada_noise$std_dev[cicada_noise$site == "eno"],
+       angle = 90, code = 3, length = 0.05, col = 'palevioletred4')
 
 points(cicada_noise$jd[cicada_noise$site == "ncbg"], cicada_noise$mean_noise[cicada_noise$site == "ncbg"], type = 'b', col = 'thistle4', pch = 17, cex = 1, lwd = 2)
 

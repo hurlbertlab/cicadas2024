@@ -4,6 +4,7 @@ library(dplyr)
 library(stringr)
 library(broom)
 library(tidyr)
+library(ggplot2)
 cicada <- read.csv('data/cicada_noise.csv')
 
 birdnet <- read.csv('data/birdnetresults.csv')%>%
@@ -35,7 +36,10 @@ lm_cicada <- function(df = birdsvcicada,
   
 }
 
-m1 <- lm_cicada()
+mBGGN <- lm_cicada(chosen_species = "Blue-gray Gnatcatcher")
+r_squaredBGGN <-summary(mBGGN)$r.squared
+mCARW <- lm_cicada(chosen_species = "Carolina Wren")
+
 summary(m1)
 m1$fitted.values
 
@@ -48,3 +52,35 @@ tidied <- tidy(m1) %>%
   mutate(common_name = chosen_species) #add species column
 write.csv(tidied, "data/results_confvspecies/AmpVYBCU.csv")
 m1 <- lm_cicada(birdsvcicada, "Yellow-billed Cuckoo")
+
+#modeling an interaction plot
+i_plot <- function(df= birdsvcicada,
+                   bird = "Acadian Flycatcher"){
+  df <- df %>%
+    filter(Bird.Call == bird)
+  
+  df %>%
+  ggplot()+
+    aes(x = mean_noise, y = Confidence, color = Distance) + 
+    geom_point()+ stat_smooth(method = lm) +
+    theme_minimal()+
+    labs(x = "Mean Cicada Amplitude", y = "Confidence Score", title = paste("Mean Cicada Ampltidue vs Confidence Score for", bird))+
+    theme(plot.title = element_text(hjust = 0.5))  
+}
+CW <- i_plot(bird = "Carolina Wren")
+CW
+ACFl <- i_plot(bird = "Acadian Flycatcher")
+ACFl
+BGGN <- i_plot(bird = "Blue-gray Gnatcatcher")
+BGGN
+EAWP <- i_plot(bird = "Eastern Wood-Pewee")
+EAWP
+MODO <- i_plot(bird = "Mourning Dove")
+MODO
+YBCU <- i_plot(bird = "Yellow-billed Cuckoo")
+YBCU
+birdsvcicada %>%
+  filter(Bird.Call == "Acadian Flycatcher")%>%
+  ggplot()+
+  aes(x = mean_noise, y = Confidence, color = Distance) + 
+  geom_point()+ stat_smooth(method = lm)

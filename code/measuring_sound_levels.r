@@ -9,7 +9,7 @@ library(dplyr)
 eno <- readMP3("audiofiles/eno/eno_0516_circle1_clipped.mp3")
 
 # visualizing audiofiles with spectrogram (frequency on y and time on x)
-spectro(eno, flim = c(0, 8))
+spectro(eno, flim = c(0, 4))
 
 # visualizing amplitude versus frequency
 par(mfrow = c(1,1))
@@ -34,7 +34,7 @@ eno2 <- readMP3("audiofiles/eno/eno_0516_circle3_clipped.mp3")
 spectro(eno2, flim = c(0,8))
 par(mfrow = c(1,1))
 par(mar = c(5,5,2,2))
-eno_amp = spec(eno2, flim = c(.97, 1.23))
+eno_amp = spec(eno2, flim = c(.97, 1.23), alim = c(0,.35))
 max_cicada_amplitude_eno = max(eno_amp[eno_amp[,1] > .9 & eno_amp[,1] < 1.2, 2])
 peakfreq_eno = eno_amp[eno_amp[,2] == max_cicada_amplitude_eno , 1]
 moving_average <- function(x, n = 5) { stats::filter(x, rep(1 / n, n), sides = 2) }

@@ -16,6 +16,7 @@ birdnet <- read.csv('data/birdnetresults.csv')%>%
 
 birdsvcicada = left_join(birdnet, cicada, by = c('Location'= 'site', 'jd' = 'jd'))%>%
   select(-7)
+write.csv(birdsvcicada, "data/birdsvcicada.csv")
 
 #################################
 #This function will create a linear regression model for each species modeling cicada amp vs their confidence interval 

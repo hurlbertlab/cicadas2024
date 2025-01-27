@@ -8,6 +8,8 @@ highestConf = read.csv(paste0("data/birdsvcicada.csv")) %>%
   group_by(Location, Bird.Call, Distance, jd, mean_noise) %>%
   summarize(Confidence = max(Confidence)) 
 
+write.csv(highestConf, "data/highestConf.csv")
+
 #this should give me a data frame of just the highest confidence scores for each species, at each location, on each sampling day  
 
 #running linear regression 

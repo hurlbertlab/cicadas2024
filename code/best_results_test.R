@@ -1,6 +1,8 @@
 #creating a script that extracts the single best recording from each site on each day of sampling
 library(dplyr) 
 library(ggplot2)
+library(tidyr)
+library(broom)
 
 highestConf = read.csv(paste0("data/birdsvcicada.csv")) %>%
   group_by(Location, Bird.Call, Distance, jd, mean_noise) %>%
@@ -11,7 +13,7 @@ highestConf = read.csv(paste0("data/birdsvcicada.csv")) %>%
 #running linear regression 
 #This function will create a linear regression model for each species modeling cicada amp vs their confidence interval 
 lm_cicada <- function(df = highestConf,
-                      chosen_species = "Blue-gray Gnatcatcher") {
+                      chosen_species = "Acadian Flycatcher") {
   #filter to just chosen species 
   df <- df %>%
     filter(Bird.Call == chosen_species)

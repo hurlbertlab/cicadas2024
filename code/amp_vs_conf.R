@@ -80,6 +80,7 @@ MODO <- i_plot(bird = "Mourning Dove")
 MODO
 YBCU <- i_plot(bird = "Yellow-billed Cuckoo")
 YBCU
+
 birdsvcicada %>%
   filter(Bird.Call == "Acadian Flycatcher")%>%
   ggplot()+

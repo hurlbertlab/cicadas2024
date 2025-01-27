@@ -33,11 +33,11 @@ lm_cicada <- function(df = birdsvcicada,
   r_squared <-summary(m1)$r.squared
 
   return(m1)
-  
 }
 
-mBGGN <- lm_cicada(chosen_species = "Blue-gray Gnatcatcher")
-r_squaredBGGN <-summary(mBGGN)$r.squared
+m1 <- lm_cicada(chosen_species = "Yellow-billed Cuckoo")
+r_squaredBGGN <-summary(m1)$r.squared
+
 mCARW <- lm_cicada(chosen_species = "Carolina Wren")
 
 summary(m1)
@@ -50,7 +50,7 @@ text(x = min(.10), y = max(.71), labels = paste("R² =", round(r_squared, 3)), p
 tidied <- tidy(m1) %>%
   pivot_longer(cols = term) %>%
   mutate(common_name = chosen_species) #add species column
-write.csv(tidied, "data/results_confvspecies/AmpVYBCU.csv")
+write.csv(tidied, "data/results_confvspecies/AmpvYBCU.csv")
 m1 <- lm_cicada(birdsvcicada, "Yellow-billed Cuckoo")
 
 #modeling an interaction plot

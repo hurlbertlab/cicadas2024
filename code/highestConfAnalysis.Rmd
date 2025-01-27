@@ -29,7 +29,7 @@ library(stringr)
 library(dplyr)
 library(lubridate)
 callResults = read.csv(paste0("data/birdnetresults.csv"))  %>%
-  mutate(date = str_extract(Date, pattern = "[0-9][0-9][0-9][0-9]"))%>% 
+  mutate(date = str_extract(resultsfile, pattern = "[0-9][0-9][0-9][0-9]"))%>% 
   mutate(jd = case_when(
     str_starts(date, "05") ~ 121 + as.numeric(substr(date, 3, 4)),
     str_starts(date, "06") ~ 152 + as.numeric(substr(date, 3, 4)),

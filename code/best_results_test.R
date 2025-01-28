@@ -1,27 +1,21 @@
-#linear regression cicada v confidence for each species 
-#need to first join birdnetconfidencelevels and cicada output so that I have the columns: species, confidence, circle, date, distance, cicada_runavg
-library(dplyr)
-library(stringr)
-library(broom)
-library(tidyr)
+#creating a script that extracts the single best recording from each site on each day of sampling
+library(dplyr) 
 library(ggplot2)
-cicada <- read.csv('data/cicada_noise.csv')
+library(tidyr)
+library(broom)
 
-birdnet <- read.csv('data/birdnetresults.csv')%>%
-  select(-(1:2),-7, -(9:11))%>%
-  mutate(jd = case_when(
-    str_starts(Date, "5") ~ 121 + as.numeric(substr(Date, 2, 3)),
-    str_starts(Date, "6") ~ 152 + as.numeric(substr(Date, 2, 3)),
-    str_starts(Date, "7") ~ 182 + as.numeric(substr(Date, 2, 3))))
+highestConf = read.csv(paste0("data/birdsvcicada.csv")) %>%
+  group_by(Location, Bird.Call, Distance, jd, mean_noise) %>%
+  summarize(Confidence = max(Confidence)) 
 
-birdsvcicada = left_join(birdnet, cicada, by = c('Location'= 'site', 'jd' = 'jd'))%>%
-  select(-7)
-write.csv(birdsvcicada, "data/birdsvcicada.csv")
+write.csv(highestConf, "data/highestConf.csv")
 
-#################################
+#this should give me a data frame of just the highest confidence scores for each species, at each location, on each sampling day  
+
+#running linear regression 
 #This function will create a linear regression model for each species modeling cicada amp vs their confidence interval 
-lm_cicada <- function(df = birdsvcicada,
-                      chosen_species = "Blue-gray Gnatcatcher") {
+lm_cicada <- function(df = highestConf,
+                      chosen_species = "Acadian Flycatcher") {
   #filter to just chosen species 
   df <- df %>%
     filter(Bird.Call == chosen_species)
@@ -32,14 +26,10 @@ lm_cicada <- function(df = birdsvcicada,
        ylab = "Confidence Score",
        main = paste("Mean Cicada Amplitude vs Confidence Score for", chosen_species))
   r_squared <-summary(m1)$r.squared
-
+  
   return(m1)
+  
 }
-
-m1 <- lm_cicada(chosen_species = "Yellow-billed Cuckoo")
-r_squaredBGGN <-summary(m1)$r.squared
-
-mCARW <- lm_cicada(chosen_species = "Carolina Wren")
 
 summary(m1)
 m1$fitted.values
@@ -51,17 +41,18 @@ text(x = min(.10), y = max(.71), labels = paste("R² =", round(r_squared, 3)), p
 tidied <- tidy(m1) %>%
   pivot_longer(cols = term) %>%
   mutate(common_name = chosen_species) #add species column
-write.csv(tidied, "data/results_confvspecies/AmpvYBCU.csv")
-m1 <- lm_cicada(birdsvcicada, "Yellow-billed Cuckoo")
+write.csv(tidied, "data/results_confvspecies/resultsBGGN.csv")
+m1 <- lm_cicada(highestConf, "Blue-Gray Gnatcatcher")
 
+#now I want to model the interaction plots again
 #modeling an interaction plot
-i_plot <- function(df= birdsvcicada,
+i_plot <- function(df= highestConf,
                    bird = "Acadian Flycatcher"){
   df <- df %>%
     filter(Bird.Call == bird)
   
   df %>%
-  ggplot()+
+    ggplot()+
     aes(x = mean_noise, y = Confidence, color = Distance) + 
     geom_point()+ stat_smooth(method = lm) +
     theme_minimal()+
@@ -81,8 +72,3 @@ MODO
 YBCU <- i_plot(bird = "Yellow-billed Cuckoo")
 YBCU
 
-birdsvcicada %>%
-  filter(Bird.Call == "Acadian Flycatcher")%>%
-  ggplot()+
-  aes(x = mean_noise, y = Confidence, color = Distance) + 
-  geom_point()+ stat_smooth(method = lm)

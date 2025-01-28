@@ -1,0 +1,55 @@
+---
+title: "highestConf Analysis"
+author: "Grace Layman"
+date: "2025-01-27"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Acadian Flycatcher Notes
+
+Below is the original interaction plot ![](figures/ggplotACFL.png)
+
+This is the interaction plot after filtering for the highest confidence score for each date![](figures/highestConf_ACFL.png)
+
+## Observation from the graphs:
+
+-   The 25 meter trials' observations become much tighter
+
+-   50 meter observations get less tight
+
+```{r}
+#I need to join highestConf file with the start and end times
+#first make it so that birdnetresults has a jd column
+#do a full join and then delete unnecessary columns 
+library(stringr)
+library(dplyr)
+library(lubridate)
+callResults = read.csv(paste0("data/birdnetresults.csv"))  %>%
+  mutate(date = str_extract(resultsfile, pattern = "[0-9][0-9][0-9][0-9]"))%>% 
+  mutate(jd = case_when(
+    str_starts(date, "05") ~ 121 + as.numeric(substr(date, 3, 4)),
+    str_starts(date, "06") ~ 152 + as.numeric(substr(date, 3, 4)),
+    str_starts(date, "07") ~ 182 + as.numeric(substr(date, 3, 4))))
+```
+
+## Audio Recording Observations:
+
+-   25m\_ 05_16 disturbances:
+
+    -   ACFL: Other birds, human talking, LOUD cicadas, real ACFL vocalization
+
+    -   BGGN: Loud Cicadas, other birds, wind/water sounds
+
+    -   CARW: Other birds, loud cicadas, wind, insects, human talking,
+
+    -   EAWP: other birds, loud cicadas
+
+    -   MODO: other birds, loud cicadas
+
+    -   YBCU: other birds, loud cicadas
+
+-   

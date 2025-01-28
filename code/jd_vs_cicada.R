@@ -15,7 +15,7 @@ cicada_noise = read.csv(paste0("data/cicada_output.csv"))  %>%
   group_by(site, jd, std_dev)%>%
   summarize(mean_noise = mean(max_running_avg, na.rm =))
 
-
+write.csv(cicada_noise, "data/cicada_noise.csv")
 #cicada_std_dev = read.csb(paste0(data/cicada_output.csv))
 #cicada_dev <- cicada_std_dev %>%
 

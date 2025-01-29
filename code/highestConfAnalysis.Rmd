@@ -34,6 +34,9 @@ callResults = read.csv(paste0("data/birdnetresults.csv"))  %>%
     str_starts(date, "05") ~ 121 + as.numeric(substr(date, 3, 4)),
     str_starts(date, "06") ~ 152 + as.numeric(substr(date, 3, 4)),
     str_starts(date, "07") ~ 182 + as.numeric(substr(date, 3, 4))))
+
+highestConfTimes3 <- highestConfTimes[-c(10:12)]
+highestConf <- highestConfTimes3
 ```
 
 ## Audio Recording Observations:

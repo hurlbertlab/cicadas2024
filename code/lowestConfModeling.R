@@ -1,20 +1,28 @@
-#creating a script that extracts the single best recording from each site on each day of sampling
-library(dplyr) 
-library(ggplot2)
-library(tidyr)
-library(broom)
+library(stringr)
+library(dplyr)
+library(lubridate)
 
-highestConf = read.csv(paste0("data/birdsvcicada.csv")) %>%
+confResults <- confResults[, -c(9:11)]
+confResults= read.csv("data/birdnetresults.csv")%>%
+  mutate(date = str_extract(resultsfile, pattern = "[0-9][0-9][0-9][0-9]"))%>% 
+  mutate(jd = case_when(
+    str_starts(date, "05") ~ 121 + as.numeric(substr(date, 3, 4)),
+    str_starts(date, "06") ~ 152 + as.numeric(substr(date, 3, 4)),
+    str_starts(date, "07") ~ 182 + as.numeric(substr(date, 3, 4))))
+confResults <- confResults[, -c(9:12)]
+confResults <- confResults[, -c(6)]
+
+
+lowestConf = read.csv(paste0("data/birdsvcicada.csv")) %>%
   group_by(Location, Bird.Call, Distance, jd, mean_noise) %>%
-  summarize(Confidence = max(Confidence)) 
+  summarize(Confidence = min(Confidence)) 
+lowestConfTimes <- left_join(lowestConf, confResults, by = c("Confidence"))
+lowestConfTimes <- lowestConfTimes[, -c(9:12)]
 
-write.csv(highestConf, "data/highestConf.csv")
+write.csv(lowestConfTimes, "data/lowestConfTimes.csv")
 
-#this should give me a data frame of just the highest confidence scores for each species, at each location, on each sampling day  
-
-#running linear regression 
-#This function will create a linear regression model for each species modeling cicada amp vs their confidence interval 
-lm_cicada <- function(df = highestConf,
+#linear regression and iplots for lowestConfTimes
+lm_cicada <- function(df = lowestConf,
                       chosen_species = "Acadian Flycatcher") {
   #filter to just chosen species 
   df <- df %>%
@@ -46,7 +54,7 @@ m1 <- lm_cicada(highestConf, "Blue-Gray Gnatcatcher")
 
 #now I want to model the interaction plots again
 #modeling an interaction plot
-i_plot <- function(df= highestConf,
+i_plot <- function(df= lowestConf,
                    bird = "Acadian Flycatcher"){
   df <- df %>%
     filter(Bird.Call == bird)

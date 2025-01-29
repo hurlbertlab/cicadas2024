@@ -1,14 +1,17 @@
 library(stringr)
 library(dplyr)
 library(lubridate)
-confResults = read.csv(paste0("data/birdnetresults.csv"))  %>%
+
+confResults <- confResults[, -c(9:11)]
+confResults= read.csv("data/birdnetresults.csv")%>%
   mutate(date = str_extract(resultsfile, pattern = "[0-9][0-9][0-9][0-9]"))%>% 
   mutate(jd = case_when(
     str_starts(date, "05") ~ 121 + as.numeric(substr(date, 3, 4)),
     str_starts(date, "06") ~ 152 + as.numeric(substr(date, 3, 4)),
-    str_starts(date, "07") ~ 182 + as.numeric(substr(date, 3, 4)))) %>%
-confResults <- confResults[, -c(6:7)]
-confResults <- confResults[, -c(7:10)]
+    str_starts(date, "07") ~ 182 + as.numeric(substr(date, 3, 4))))
+confResults <- confResults[, -c(9:12)]
+confResults <- confResults[, -c(6)]
+
 
 lowestConf = read.csv(paste0("data/birdsvcicada.csv")) %>%
   group_by(Location, Bird.Call, Distance, jd, mean_noise) %>%

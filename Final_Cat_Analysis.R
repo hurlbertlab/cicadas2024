@@ -5,13 +5,15 @@ library(gsheet)
 library(maps)
 library(sf)
 library(tidyr)
+library(ggplot2)
 
-#Datasets used in project
+#Datasets
 LandscapeCover = read.csv("data/sites_2022-09-19.csv")
 LandscapePrairie = read.csv("data/prairieridgeforest.csv")
 ForestCover = read.csv("data/ForestCover.csv")
 fullDataset = read.csv("data/fullDataset_2024-08-17.csv")
 Cicadanoise = read.csv("data/inputated_values.csv")
+WeeklyCicadaNoise = read.csv("data/cicada_noise.csv")
 
 # Function for substituting values based on a condition using dplyr:mutate
 # Modification of dplyr's mutate function that only acts on the rows meeting a condition
@@ -45,7 +47,6 @@ new = TRUE
 color = 'black'
 allCats = TRUE
 
-# Function for calculating and displaying arthropod phenology by week
 meanDensityByWeek = function(surveyData, # merged dataframe of Survey and arthropodSighting tables for a single site
                              ordersToInclude = 'All', 
                              minLength = 0,   # minimum arthropod size to include 
@@ -198,16 +199,8 @@ par(mfrow = c(2,3), mar= c(5, 5, 4, 2) + 0.1,
 ER24 = filter(fullDataset, Name == "Eno River State Park", Year== 2024)
 ERCats24 = meanDensityByWeek(ER24, ordersToInclude = "caterpillar", plot = TRUE, new = TRUE, color = 'black', ylim= c(0, 30), xlim= c(110, 220), ylab= "Percent of Surveys with Caterpillars", xlab= "Julian Day")
 
-#no data for 2023
-#ER23 = filter(fullDataset, Name == "Eno River State Park", Year== 2023)
-#ERCats23 = meanDensityByWeek(ER23, ordersToInclude = "caterpillar", plot = TRUE, new = FALSE, color = 'purple')
-
 ER22 = filter(fullDataset, Name == "Eno River State Park", Year== 2022)
 ERCats22 = meanDensityByWeek(ER22, ordersToInclude = "caterpillar", plot = TRUE, new = FALSE, color = 'green3')
-
-#no data for 2021
-#ER21 = filter(fullDataset, Name == "Eno River State Park", Year== 2021)
-#ERCats21 = meanDensityByWeek(ER21, ordersToInclude = "caterpillar", plot = TRUE, new = FALSE, color = 'red')
 
 title("Eno River State Park")
 legend("topleft", legend = c("2024", "2022"),
@@ -238,14 +231,8 @@ legend("topleft", legend = c("2024", "2023", "2022", "2021"),
 JM24 = filter(fullDataset, Name== "Triangle Land Conservancy - Johnston Mill Nature Preserve", Year== 2024)
 JMCats24 = meanDensityByWeek(JM24, ordersToInclude = "caterpillar", plot = TRUE, new = TRUE, color = 'black', ylim= c(0,30), xlim= c(110, 220), ylab= "Percent of Surveys with Caterpillars", xlab= "Julian Day")
 
-#JM23 = filter(fullDataset, Name== "Triangle Land Conservancy - Johnston Mill Nature Preserve", Year== 2023')
-#JMCats23 = meanDensityByWeek(JM23, ordersToInclude = "caterpillar", plot = TRUE, new = FALSE, color = 'purple')
-
 JM22 = filter(fullDataset, Name== "Triangle Land Conservancy - Johnston Mill Nature Preserve", Year== 2022)
 JMCats22 = meanDensityByWeek(JM22, ordersToInclude = "caterpillar", plot = TRUE, new = FALSE, color = 'green3')
-
-#JM21 = filter(fullDataset, Name== "Triangle Land Conservancy - Johnston Mill Nature Preserve", Year== 2021)
-#JMCats21 = meanDensityByWeek(JM21, ordersToInclude = "caterpillar", plot = TRUE, new = FALSE, color = 'red')
 
 title("Johnston Mill")
 legend("topleft", legend = c("2024", "2022"),
@@ -381,9 +368,6 @@ fracdataframe <- fracdataframe %>%
 fracdataframe <- fracdataframe %>%
   mutate(cicada_present = ifelse(year_2024 == TRUE & during_cicada == TRUE, 1, 0))
 
-write.csv(fracdataframe, "data/SitesCatFracDuringCicadas.csv", row.names= FALSE)
-
-
 
 fracdiff <- fracdataframe %>%
   group_by(site, year_2024, forest_1km, calculated_mean_noise) %>%
@@ -408,20 +392,11 @@ summary(lm_noise_frac_diff)
 
 
 #lm models //////////
-#lm_cats_site <- lm(truefrac ~ year_2024, data = fracdataframe)
-#summary(lm_cats_site)
-
-#lm_cats_site_year <- lm(truefrac ~ year_2024 + site, data = fracdataframe)
-#summary(lm_cats_site_year)
-
 lm_cicada_effect <- lm(truefrac ~ year_2024 + site *during_cicada, data = fracdataframe)
 summary(lm_cicada_effect)
 
 lm_interaction <- lm(truefrac ~ cicada_present + site, data = fracdataframe)
 summary(lm_interaction)
-
-#lm_add <- lm(truefrac ~ cicada_present * site, data = fracdataframe)
-#summary(lm_additive)
 
 lm_forest_frac_diff <- lm(truefracdiff ~ forest_1km, data = fracdiff)
 summary(lm_forest_frac_diff)
@@ -655,3 +630,208 @@ legend("topleft", legend = names(site_colors),
        col = site_colors, 
        pch = site_shapes, 
        cex = 0.68)
+
+
+
+
+
+
+
+#Dataset and filter for Clay Cat Predation and weekly cicada noise///////////////////////
+url = "https://docs.google.com/spreadsheets/d/1hi7iyi7xunriU2fvFpgNVDjO5ERML4IUgzTkQjLVYCo/edit?gid=0#gid=0"
+df = gsheet2tbl(url) %>%
+  mutate(DeployDate = as.Date(DeployDate, format = "%m/%d/%Y"),
+         CollectionDate = as.Date(CollectionDate, format = "%m/%d/%Y"))
+
+#Second deployment selected for this
+birdPred = df %>%
+  filter('Not_Found' != 1) %>%
+  group_by(Name, DeployDate) %>%
+  summarize(numBirdStrikes = sum(Bird),
+            numClayCats = n(),
+            pctBird = 100*numBirdStrikes/numClayCats) %>%
+  mutate(jd = yday(DeployDate)+4) %>%
+  filter(jd >= 151 & jd <= 156)
+
+WeeklyCicadaNoise = WeeklyCicadaNoise %>%
+  mutate(jd = jd+4)
+WeeklyCicadaNoise_filtered = WeeklyCicadaNoise %>%
+  filter(jd >= 151 & jd <= 156)
+
+WeeklyCicadaNoise_filtered = WeeklyCicadaNoise_filtered %>%
+  mutate(Name = case_when(
+    site == "eno" ~ "Eno River State Park",
+    site == "jmill" ~ "Triangle Land Conservancy - Johnston Mill Nature Preserve",
+    site == "ncbg" ~ "NC Botanical Garden",
+    site == "pridge" ~ "Prairie Ridge Ecostation",
+    site == "unc" ~ "UNC Chapel Hill Campus",
+    TRUE ~ NA_character_  # For any unmatched values, assign NA
+  ))
+WeeklyCicadaNoise_filtered = WeeklyCicadaNoise_filtered %>%
+  select(-std_dev, -site, -X, -jd)
+
+WeeklyCicadaNoise_filtered = WeeklyCicadaNoise_filtered %>%
+  left_join(ForestCover %>% select(Name, forest_1km)) 
+
+final_data = WeeklyCicadaNoise_filtered %>%
+  left_join(birdPred, by = "Name") %>%
+  filter(Name != "UNC Chapel Hill Campus")
+
+
+
+j <- lm(pctBird ~ forest_1km, data = final_data)
+summary(j)
+
+ggplot(final_data, aes(x = forest_1km, y = pctBird)) +
+  geom_point() +  # Scatter plot points
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Regression line
+  labs(title = "Scatter Plot of pctBird vs. forest_1km",
+       x = "Forest_1km",
+       y = "Predation") +
+  theme_minimal()
+
+
+
+#jj <- lm(pctBird ~ mean_noise, data = final_data)
+#summary(jj)
+
+#ggplot(final_data, aes(x = mean_noise, y = pctBird)) +
+#  geom_point() +  # Scatter plot points
+#  geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Regression line
+#  labs(title = "Scatter Plot of pctBird vs. mean_noise",
+#       x = "Forest_1km",
+#       y = "Predation") +
+#  theme_minimal()
+
+
+#First Deployment Selected 
+birdPred1 = df %>%
+  filter('Not_Found' != 1) %>%
+  group_by(Name, DeployDate) %>%
+  summarize(numBirdStrikes = sum(Bird),
+            numClayCats = n(),
+            pctBird = 100*numBirdStrikes/numClayCats) %>%
+  mutate(jd = yday(DeployDate)+7) %>%
+  filter(jd >= 141 & jd <= 145)
+
+WeeklyCicadaNoise_filtered1 = WeeklyCicadaNoise %>%
+  filter(jd >= 141 & jd <= 145)
+
+WeeklyCicadaNoise_filtered1 = WeeklyCicadaNoise_filtered1 %>%
+  mutate(Name = case_when(
+    site == "eno" ~ "Eno River State Park",
+    site == "jmill" ~ "Triangle Land Conservancy - Johnston Mill Nature Preserve",
+    site == "ncbg" ~ "NC Botanical Garden",
+    site == "pridge" ~ "Prairie Ridge Ecostation",
+    site == "unc" ~ "UNC Chapel Hill Campus",
+    TRUE ~ NA_character_  # For any unmatched values, assign NA
+  ))
+WeeklyCicadaNoise_filtered1 = WeeklyCicadaNoise_filtered1 %>%
+  select(-std_dev, -site, -X, -jd)
+
+WeeklyCicadaNoise_filtered1 = WeeklyCicadaNoise_filtered1 %>%
+  left_join(ForestCover %>% select(Name, forest_1km)) 
+
+final_data1 = WeeklyCicadaNoise_filtered1 %>%
+  left_join(birdPred, by = "Name") 
+
+
+
+i <- lm(pctBird ~ forest_1km, data = final_data1)
+summary(i)
+
+ggplot(final_data1, aes(x = forest_1km, y = pctBird)) +
+  geom_point() +  # Scatter plot points
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Regression line
+  labs(title = "Scatter Plot of pctBird vs. forest_1km",
+       x = "Forest_1km",
+       y = "Predation") +
+  theme_minimal()
+
+
+
+#h <- lm(pctBird ~ mean_noise, data = final_data1)
+#summary(h)
+
+final_data_without1 = WeeklyCicadaNoise_filtered1 %>%
+  left_join(birdPred, by = "Name") %>%
+  filter(Name != "UNC Chapel Hill Campus")
+
+
+ii <- lm(pctBird ~ forest_1km, data = final_data_without1)
+summary(ii)
+
+ggplot(final_data_without1, aes(x = forest_1km, y = pctBird)) +
+  geom_point() +  # Scatter plot points
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Regression line
+  labs(title = "Scatter Plot of pctBird vs. forest_1km",
+       x = "Forest_1km",
+       y = "Predation") +
+  theme_minimal()
+
+
+
+###### I pickle Ricked it up!!!! Need to use this for mean noise!!!
+library(readxl)
+NoisePredation <- read_excel("~/Downloads/NoisePredation.xlsx")
+View(NoisePredation)
+
+
+
+x <- lm(pctBird ~ mean_noise, data = NoisePredation)
+summary(x)
+
+ggplot(NoisePredation, aes(x = mean_noise, y = pctBird)) +
+  geom_point() +  # Scatter plot points
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Regression line
+  labs(title = "Scatter Plot of pctBird vs. mean_noise",
+       x = "Mean Noise",
+       y = "Percentage of Birds") +
+  theme_minimal()
+
+xy <- lm(pctBird ~ mean_noise * Name, data = NoisePredation)
+summary(xy)
+
+
+
+xx <- lm(pctBird ~ mean_noise + Name, data = NoisePredation)
+summary(xx)
+
+ggplot(NoisePredation, aes(x = mean_noise, y = pctBird, color = Name)) +
+  geom_point(size = 3, alpha = 0.8) +  # Scatter plot points
+  geom_smooth(method = "lm", se = FALSE) +  # Regression line for each site
+  facet_wrap(~ Name) +  # Create separate plots for each site
+  labs(title = "Predation vs. Noise by Site",
+       x = "Mean Noise (dB)",
+       y = "Percentage of Bird Predation") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+
+
+
+
+
+
+
+
+
+
+#Need to just use the one with 5 data points. they need to be either first or second deployment.
+#NoisePredation <- NoisePredation %>%
+#  left_join(ForestCover %>% select(Name, forest_1km)) 
+
+#z <- lm(pctBird ~ forest_1km + mean_noise, data = NoisePredation)
+#summary(z)
+
+#zx <- lm(pctBird ~ forest_1km * mean_noise, data = NoisePredation)
+#summary(zx)
+
+#zz <- lm(pctBird ~ forest_1km, data = NoisePredation)
+#summary(zz)
+
+#ggplot(NoisePredation, aes(x = forest_1km, y = pctBird)) +
+#  geom_point() +  # Plot the data points
+#  geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Add regression line
+#  labs(title = "Forest Cover vs Bird Predation", x = "Forest Cover (1km)", y = "Bird Predation (%)") +
+#  theme_minimal()

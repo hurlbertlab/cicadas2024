@@ -33,7 +33,7 @@ lm_cicada <- function(df = highestConf,
 
 summary(m1)
 m1$fitted.values
-
+m1 <- lm_cicada(birdsvcicada, "Yellow-billed Cuckoo")
 abline(m1, col = "blue")
 text(x = min(.10), y = max(.71), labels = paste("R² =", round(r_squared, 3)), pos = 4, col = 'blue')
 

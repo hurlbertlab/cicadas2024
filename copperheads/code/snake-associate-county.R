@@ -112,42 +112,36 @@ plot(cicada_brood$SHAPE)
 snakes_brood<- 
   st_join(snakes_geom, cicada_brood, join = st_within) %>%
   filter(!is.na(BROOD_NAME))
-#same number of observations as snakes_county, perf. 
-# 
-# n_snake_obs_brood_year <- 
-#   snakes_brood %>%
-#   group_by(BROOD_NAME, year, YEAR_NEXT_EMERGENCE, CYCLE) %>%
-#   summarize(n_snakes = n()) %>%
-#   st_drop_geometry()
-# 
-# n_copperhead_brood_year <-
-#   snakes_brood %>%
-#   filter(scientific_name == "Agkistrodon contortrix") %>%
-#   group_by(BROOD_NAME, year, scientific_name) %>%
-#   summarize(n_copper = n()) %>%
-#   st_drop_geometry()
-# 
-# snakes_year_brood <- 
-#   left_join(n_snake_obs_brood_year, n_copperhead_brood_year, by = c("BROOD_NAME", "year")) %>%
-#   ungroup() %>%
-#   mutate(perc_copper = n_copper/n_snakes) %>%
-#   mutate(last_emergence = case_when(
-#     YEAR_NEXT_EMERGENCE > 2024 ~ (YEAR_NEXT_EMERGENCE-CYCLE),
-#     YEAR_NEXT_EMERGENCE < 2024 ~ (YEAR_NEXT_EMERGENCE),
-#     TRUE ~ 2024
-#   )) %>%
-#   mutate(emergence_year = ifelse(test = (year == last_emergence), 1, 0)) %>%
-#   #let's filter to brood years that have a minimum number of snakes observations, let's say at least 20 snakes had to be seen within the whole brood area.
-#   filter(n_snakes >= 20)
-# 
-# write.csv(snakes_year_brood, "copperheads/data/snakes/snakes_brood_year.csv")
+#same number of observations as snakes_county, perf.
 
-#there's some way to mark the years that cicadas emerge based on brood years, because there are some broods that have emerged twice within the dataset and should be reflected
-snakes_year_brood <- read.csv("copperheads/data/snakes/snakes_brood_year.csv") %>%
-  dplyr::rows_update(emergence_year, )
-  left_join(emergence_years, by = c("BROOD_NAME", "CYCLE" = "cycle"))
+n_snake_obs_brood_year <-
+  snakes_brood %>%
+  group_by(BROOD_NAME, year, YEAR_NEXT_EMERGENCE, CYCLE) %>%
+  summarize(n_snakes = n()) %>%
+  st_drop_geometry()
 
-write.csv(snakes_year_brood, "copperheads/data/snakes/snakes_year_brood.csv", row.names = FALSE)
+n_copperhead_brood_year <-
+  snakes_brood %>%
+  filter(scientific_name == "Agkistrodon contortrix") %>%
+  group_by(BROOD_NAME, year, scientific_name) %>%
+  summarize(n_copper = n()) %>%
+  st_drop_geometry()
+
+snakes_year_brood <-
+  left_join(n_snake_obs_brood_year, n_copperhead_brood_year, by = c("BROOD_NAME", "year")) %>%
+  ungroup() %>%
+  mutate(perc_copper = n_copper/n_snakes) %>%
+  mutate(last_emergence = case_when(
+    YEAR_NEXT_EMERGENCE > 2024 ~ (YEAR_NEXT_EMERGENCE-CYCLE),
+    YEAR_NEXT_EMERGENCE < 2024 ~ (YEAR_NEXT_EMERGENCE),
+    TRUE ~ 2024
+  )) %>%
+  mutate(emergence_year = ifelse(test = (year == last_emergence), 1, 0)) %>%
+  #let's filter to brood years that have a minimum number of snakes observations, let's say at least 20 snakes had to be seen within the whole brood area.
+  filter(n_snakes >= 20)
+
+write.csv(snakes_year_brood, "copperheads/data/snakes/snakes_brood_year.csv")
+
 
 #plot 
 my_bar <- boxplot(perc_copper ~ emergence_year,

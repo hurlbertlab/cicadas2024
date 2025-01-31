@@ -11,6 +11,7 @@ library(assertthat)
 #load in snake data, this has already been filtered to only cicada counties
 snakes_year_county <- read.csv("copperheads/data/snakes/snakes_county_year.csv") %>% 
   filter(year > 2018) %>% #just 2019 onwards, once we've got good iNat adoption rates.
+  #add new columns that we will fill in
   mutate(emergence_year = NA,
          BROOD_NAME = NA,
          cycle = NA)

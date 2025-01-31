@@ -35,11 +35,22 @@ cicada <- st_read(dsn = gdb_path) %>%
   plot(c$geometry)
   #perfection!
   
+  #check CT codes came out OK.
+  CTc <- c %>% filter(STATEFP == "09") 
+  assertthat::assert_that(any(is.na(CTc) == FALSE))
+  
   #save the updated cicada that now has county information added.
   #if this doesn't work with your computer, try another one. This worked fine on one of mine and then on my lab computer it said it couldn't build a .gdb (even after updating sf)
-  st_write(c, dsn = "copperheads/data/cicada/periodical_cicada_with_county.gdb", layer = "Periodical_Cicada_Brood_W_County", driver = "OpenFileGDB")
+  st_write(c, 
+           dsn = "copperheads/data/cicada/periodical_cicada_with_county.gdb", 
+           layer = "Periodical_Cicada_Brood_W_County", 
+           driver = "OpenFileGDB", 
+           append = FALSE #to overwrite existing
+           )
 
 #to load in and plot the new .gdb this created
-cicada <- st_read(dsn = "copperheads/data/cicada/periodical_cicada_with_county.gdb")
-plot(cicada$SHAPE) 
+cicada_test <- st_read(dsn = "copperheads/data/cicada/periodical_cicada_with_county.gdb")
+CT_test <- cicada_test %>% filter(STATEFP == "09")
+assertthat::assert_that(any(is.na(CT_test) == FALSE))
+plot(CT_test$SHAPE)
 

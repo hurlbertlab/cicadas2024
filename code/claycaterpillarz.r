@@ -13,7 +13,7 @@ df = gsheet2tbl(url) %>%
          CollectionDate = as.Date(CollectionDate, format = "%m/%d/%Y"))
 
 birdPred = df %>%
-  filter(Not.Found != 1) %>%
+  filter('Not_Found' != 1) %>%
   group_by(Name, DeployDate) %>%
   summarize(numBirdStrikes = sum(Bird),
             numClayCats = n(),

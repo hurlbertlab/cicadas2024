@@ -1,14 +1,18 @@
 library(stringr)
 library(dplyr)
 library(lubridate)
-confResults = read.csv(paste0("data/birdnetresults.csv"))  %>%
+library(ggplot2)
+
+confResults <- confResults[, -c(9:11)]
+confResults= read.csv("data/birdnetresults.csv")%>%
   mutate(date = str_extract(resultsfile, pattern = "[0-9][0-9][0-9][0-9]"))%>% 
   mutate(jd = case_when(
     str_starts(date, "05") ~ 121 + as.numeric(substr(date, 3, 4)),
     str_starts(date, "06") ~ 152 + as.numeric(substr(date, 3, 4)),
-    str_starts(date, "07") ~ 182 + as.numeric(substr(date, 3, 4)))) %>%
-confResults <- confResults[, -c(6:7)]
-confResults <- confResults[, -c(7:10)]
+    str_starts(date, "07") ~ 182 + as.numeric(substr(date, 3, 4))))
+confResults <- confResults[, -c(9:12)]
+confResults <- confResults[, -c(6)]
+
 
 lowestConf = read.csv(paste0("data/birdsvcicada.csv")) %>%
   group_by(Location, Bird.Call, Distance, jd, mean_noise) %>%
@@ -59,7 +63,8 @@ i_plot <- function(df= lowestConf,
   df %>%
     ggplot()+
     aes(x = mean_noise, y = Confidence, color = Distance) + 
-    geom_point()+ stat_smooth(method = lm) +
+    geom_point(aes(shape = Location), size = 4)+
+    stat_smooth(method = lm) +
     theme_minimal()+
     labs(x = "Mean Cicada Amplitude", y = "Confidence Score", title = paste("Mean Cicada Ampltidue vs Confidence Score for", bird))+
     theme(plot.title = element_text(hjust = 0.5))  

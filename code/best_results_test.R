@@ -54,7 +54,8 @@ i_plot <- function(df= highestConf,
   df %>%
     ggplot()+
     aes(x = mean_noise, y = Confidence, color = Distance) + 
-    geom_point()+ stat_smooth(method = lm) +
+    geom_point(aes(shape = Location), size = 3)+ 
+    stat_smooth(method = lm) +
     theme_minimal()+
     labs(x = "Mean Cicada Amplitude", y = "Confidence Score", title = paste("Mean Cicada Ampltidue vs Confidence Score for", bird))+
     theme(plot.title = element_text(hjust = 0.5))  

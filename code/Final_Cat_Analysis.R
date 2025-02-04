@@ -7,6 +7,7 @@ library(sf)
 library(tidyr)
 library(ggplot2)
 
+
 #Datasets
 LandscapeCover = read.csv("data/sites_2022-09-19.csv")
 LandscapePrairie = read.csv("data/prairieridgeforest.csv")
@@ -280,20 +281,6 @@ legend("topleft", legend = c("2024", "2023", "2022", "2021"),
        lty = 1,
        lwd = 2)
 
-####example
-#pHat<- example_fracsurveys
-#nSurvs<- example$SUM_nsurveys[1]
-#example_confidence_interval_min <- pHat-1.96*(pHat*(1-pHat)/nSurvs)^.5
-#example_confidence_interval_max<- pHat+1.96*(pHat*(1-pHat)/nSurvs)^.5
-#example_all_plot
-#plot(x = 1, #we only have one point, this will represent out Pre-2024
-     #y = pHat,
-     #xlab = "",
-     #ylab = "")
-#segments(1, example_confidence_interval_min,
-         #1, example_confidence_interval_max)
-
-
 ###########creating a for loop that will help with fracsurveys
 frac_calculator <- function(
     site = "UNC Chapel Hill Campus", 
@@ -322,7 +309,6 @@ frac_calculator <- function(
   return(result)
 }
 
-#add everything together in one dataframe by creating a data frame
 fracdataframe<- data.frame()
 
 site_list <- c("UNC Chapel Hill Campus",
@@ -336,13 +322,12 @@ for (site in site_list) {
   pre2024_nocicada <- frac_calculator(site = site, year_range = 2021:2023, julian_range = 166:365)
   during2024_nocicada <- frac_calculator(site = site, year_range = 2024, julian_range = 166:365)
   
-  #add these to my dataframe!
   new_rows <- bind_rows(
     pre2024_cicada,
     during2024_cicada,
     pre2024_nocicada,
     during2024_nocicada
-  ) #bind all four datasets together
+  ) 
   
   #add these rows to my existing dataframe, outside the for loop
   fracdataframe <- bind_rows(fracdataframe, new_rows)
@@ -647,13 +632,10 @@ birdPred = df %>%
   summarize(numBirdStrikes = sum(Bird),
             numClayCats = n(),
             pctBird = 100*numBirdStrikes/numClayCats) %>%
-  mutate(jd = yday(CollectionDate)) %>%
-  filter(jd >= 141 & jd <= 145)
+  mutate(jd = yday(CollectionDate)) 
 
-WeeklyCicadaNoise_filtered = WeeklyCicadaNoise %>%
-  filter(jd >= 141 & jd <= 145)
-
-WeeklyCicadaNoise_filtered = WeeklyCicadaNoise_filtered %>%
+final_data_1st_Deployment = WeeklyCicadaNoise %>%
+  filter(jd >= 141 & jd <= 145) %>%
   mutate(Name = case_when(
     site == "eno" ~ "Eno River State Park",
     site == "jmill" ~ "Triangle Land Conservancy - Johnston Mill Nature Preserve",
@@ -661,20 +643,38 @@ WeeklyCicadaNoise_filtered = WeeklyCicadaNoise_filtered %>%
     site == "pridge" ~ "Prairie Ridge Ecostation",
     site == "unc" ~ "UNC Chapel Hill Campus",
     TRUE ~ NA_character_  # For any unmatched values, assign NA
-  ))
-WeeklyCicadaNoise_filtered = WeeklyCicadaNoise_filtered %>%
-  select(-std_dev, -site, -X, -jd)
+  )) %>%
+  left_join(ForestCover, by = 'Name') %>% 
+  select(Name, forest_1km, mean_noise)  %>%
+  left_join(birdPred, by = "Name") %>%
+  filter(jd >= 141 & jd <= 145)
 
-WeeklyCicadaNoise_filtered = WeeklyCicadaNoise_filtered %>%
-  left_join(ForestCover %>% select(Name, forest_1km)) 
+final_data_1st_Deployment_Forest <- lm(pctBird ~ forest_1km, data = final_data_1st_Deployment)
+summary(final_data_1st_Deployment_Forest)
 
-final_data_1st_Deployment = WeeklyCicadaNoise_filtered %>%
-  left_join(birdPred, by = "Name") 
+final_data_1st_Deployment_Noise <- lm(pctBird ~ mean_noise, data = final_data_1st_Deployment)
+summary(final_data_1st_Deployment_Forest)
 
+final_data_2nd_Deployment = WeeklyCicadaNoise %>%
+  filter(jd >= 155 & jd <= 159) %>%
+  mutate(Name = case_when(
+    site == "eno" ~ "Eno River State Park",
+    site == "jmill" ~ "Triangle Land Conservancy - Johnston Mill Nature Preserve",
+    site == "ncbg" ~ "NC Botanical Garden",
+    site == "pridge" ~ "Prairie Ridge Ecostation",
+    site == "unc" ~ "UNC Chapel Hill Campus",
+    TRUE ~ NA_character_  # For any unmatched values, assign NA
+  )) %>%
+  left_join(ForestCover, by = 'Name') %>% 
+  select(Name, forest_1km, mean_noise)  %>%
+  left_join(birdPred, by = "Name") %>%
+  filter(jd >= 155 & jd <= 159)
 
+final_data_2nd_Deployment_Forest <- lm(pctBird ~ forest_1km, data = final_data_2nd_Deployment)
+summary(final_data_2nd_Deployment_Forest)
 
-i <- lm(pctBird ~ forest_1km, data = final_data_1st_Deployment)
-summary(i)
+final_data_2nd_Deployment_Noise <- lm(pctBird ~ mean_noise, data = final_data_2nd_Deployment)
+summary(final_data_2nd_Deployment_Forest)
 
 ggplot(final_data_1st_Deployment, aes(x = forest_1km, y = pctBird)) +
   geom_point() +  # Scatter plot points
@@ -684,24 +684,14 @@ ggplot(final_data_1st_Deployment, aes(x = forest_1km, y = pctBird)) +
        y = "Predation") +
   theme_minimal()
 
-#h <- lm(pctBird ~ mean_noise, data = final_data1)
-#summary(h)
-
-final_data_without = WeeklyCicadaNoise_filtered %>%
-  left_join(birdPred, by = "Name") %>%
-  filter(Name != "UNC Chapel Hill Campus")
-
-
-ii <- lm(pctBird ~ forest_1km, data = final_data_without)
-summary(ii)
-
-ggplot(final_data_without, aes(x = forest_1km, y = pctBird)) +
+ggplot(final_data_1st_Deployment, aes(x = mean_noise, y = pctBird)) +
   geom_point() +  # Scatter plot points
   geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Regression line
   labs(title = "Scatter Plot of pctBird vs. forest_1km",
        x = "Forest_1km",
        y = "Predation") +
   theme_minimal()
+
 
 ###### I pickle Ricked it up!!!! Need to use this for mean noise!!!
 library(readxl)
@@ -710,8 +700,8 @@ NoisePredation <- read_excel("~/Downloads/NoisePredation.xlsx")
 NoisePredation = NoisePredation %>%
   left_join(ForestCover %>% select(Name, forest_1km))
 
-WeeklyPredationNoise <- lm(pctBird ~ mean_noise, data = NoisePredation)
-summary(WeeklyPredationNoise)
+WeeklyPredationNoise <- lm(pctBird ~ mean_noise + Deployment -1, data = NoisePredation)
+
 
 ggplot(NoisePredation, aes(x = mean_noise, y = pctBird)) +
   geom_point() +  # Scatter plot points
@@ -721,11 +711,18 @@ ggplot(NoisePredation, aes(x = mean_noise, y = pctBird)) +
        y = "Percentage of Birds") +
   theme_minimal()
 
-xy <- lm(pctBird ~ mean_noise * Name, data = NoisePredation)
-summary(xy)
+Mean_Noise_additive <- lm(pctBird ~ mean_noise + Name, data = NoisePredation)
+summary(Mean_Noise_additive)
 
-xx <- lm(pctBird ~ mean_noise + Name, data = NoisePredation)
-summary(xx)
+
+ggplot(NoisePredation, aes(mean_noise, pctBird, col = Name)) +
+  geom_point(size = 3, alpha = 0.8) +
+  labs(x = "Mean Noise", y = "Bird Predation") +
+  geom_smooth(method = 'lm', se = F) +
+  geom_smooth(method = 'lm', se = F, aes(group = Name)) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
 
 ggplot(NoisePredation, aes(x = mean_noise, y = pctBird, color = Name)) +
   geom_point(size = 3, alpha = 0.8) +  # Scatter plot points

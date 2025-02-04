@@ -1,6 +1,7 @@
 library(stringr)
 library(dplyr)
 library(lubridate)
+library(ggplot2)
 
 confResults <- confResults[, -c(9:11)]
 confResults= read.csv("data/birdnetresults.csv")%>%
@@ -62,7 +63,8 @@ i_plot <- function(df= lowestConf,
   df %>%
     ggplot()+
     aes(x = mean_noise, y = Confidence, color = Distance) + 
-    geom_point()+ stat_smooth(method = lm) +
+    geom_point(aes(shape = Location), size = 4)+
+    stat_smooth(method = lm) +
     theme_minimal()+
     labs(x = "Mean Cicada Amplitude", y = "Confidence Score", title = paste("Mean Cicada Ampltidue vs Confidence Score for", bird))+
     theme(plot.title = element_text(hjust = 0.5))  

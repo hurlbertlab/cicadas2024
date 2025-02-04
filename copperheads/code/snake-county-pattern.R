@@ -11,6 +11,7 @@ library(assertthat)
 #load in snake data, this has already been filtered to only cicada counties
 snakes_year_county <- read.csv("copperheads/data/snakes/snakes_county_year.csv") %>% 
   filter(year > 2018) %>% #just 2019 onwards, once we've got good iNat adoption rates.
+  #add new columns that we will fill in
   mutate(emergence_year = NA,
          BROOD_NAME = NA,
          cycle = NA)
@@ -27,7 +28,7 @@ unique_broods <- unique(emergence_years$BROOD_NAME)
 
 c <- data.frame()
 
-#not sure why it works down below and NOT here within this for loop. hm :/
+#for loop for assigning the right cicada brood name + emergence to every county
 for(i in 1:length(unique_broods)) {
   #filter cicada to get the counties it happens in
   ibroodcounties <- cicada %>% 
@@ -81,6 +82,10 @@ for(i in 1:length(unique_broods)) {
     filter(!is.na(BROOD_NAME)) %>%
     summarize(n_broods = length(unique(BROOD_NAME)))
   
+  #testing
+  temp_syc_2broods <- snakes_year_county %>% 
+           filter(ST_CNTY_CODE %in% c(13241,17075,17183,18091,26023,26149,37193,47009,47155))
+  
   for(a in 1:nrow(temp_nbroods)) {
     
     temp_syc <- snakes_year_county %>% 
@@ -92,13 +97,23 @@ for(i in 1:length(unique_broods)) {
       #the max doesn't mean anything, bc there's only one emergence year. Just removing the NAs
       
       temp_syc <- temp_syc %>%
-        mutate(emergence_year = yr_emergence - year)
+        mutate(emergence_year = year - yr_emergence)
       
-    } if(temp_nbroods$n_broods[a] == 2) {
+    } else if(temp_nbroods$n_broods[a] == 2) {
       
-      yr_emergence_one
-      
-      yr_emergence_two
+      #get the latest emergence year
+      yr_emergence_one <- max(temp_syc$year[temp_syc$emergence_year == 0], na.rm = TRUE)
+      #get the earliest emergence year
+      yr_emergence_two <- min(temp_syc$year[temp_syc$emergence_year == 0], na.rm = TRUE) 
+      #create two emergence_years, take the min, don't replace if emergence year is a 0
+      temp_syc <- temp_syc %>%
+        mutate(emone = year - yr_emergence_one,
+               emtwo = year - yr_emergence_two,
+               emergence_year = case_when(
+                 emergence_year == 0 ~ emergence_year, #keep the same
+                 emergence_year != 0 ~ pmin(emone, emtwo, na.rm = TRUE)
+               )) %>%
+       dplyr::select(-emone, -emtwo)
       
     } else {
       #error out
@@ -106,6 +121,9 @@ for(i in 1:length(unique_broods)) {
     }
     
     #dplyr update rows
+    snakes_year_county <- snakes_year_county %>%
+      dplyr::rows_update(temp_syc, by = c("ST_CNTY_CODE", "year"))
+    
     
   }
   

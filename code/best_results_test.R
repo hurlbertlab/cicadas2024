@@ -46,7 +46,7 @@ m1 <- lm_cicada(highestConf, "Blue-Gray Gnatcatcher")
 
 #now I want to model the interaction plots again
 #modeling an interaction plot
-i_plot <- function(df= highestConf,
+i_plot <- function(df= highestConfNoUNC,
                    bird = "Acadian Flycatcher"){
   df <- df %>%
     filter(Bird.Call == bird)

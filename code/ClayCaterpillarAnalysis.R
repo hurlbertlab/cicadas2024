@@ -285,3 +285,4 @@ legend("topleft", legend = c("2024", "2023", "2022", "2021"),
        col = c("black", "purple", "green3", "red"),
        lty = 1,
        lwd = 2)
+

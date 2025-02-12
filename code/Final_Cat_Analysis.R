@@ -291,14 +291,12 @@ summary(final_data_2nd_Deployment_Forest)
 final_data_2nd_Deployment_Noise <- lm(pctBird ~ mean_noise, data = final_data_2nd_Deployment)
 summary(final_data_2nd_Deployment_Forest)
 
-Mean_Noise_additive <- lm(pctBird ~ mean_noise + Name, data = NoisePredation)
+Mean_Noise_additive <- lm(pctBird ~ mean_noise + Name -1, data = NoisePredation)
 summary(Mean_Noise_additive)
 
 
 ###############data plotted
-quartz(width = 14, height = 7)
-par(mfrow = c(1,2), mar= c(5, 5, 4, 2) + 0.1, 
-    oma = c(0, 0, 2, 4))
+par(mfrow = c(1, 2))
 
 #During cicada emergence
 cicada_analysis <- fracdataframe %>%
@@ -369,7 +367,7 @@ legend("topleft",
        col = site_colors,
        lwd = 2,
        pch = 16,
-       cex = .8,
+       cex = 1,
        bty = "n")
 
 
@@ -442,14 +440,14 @@ legend("topleft",
        col = site_colors, 
        lwd = 2, 
        pch = 16, 
-       cex = .8,
+       cex = 1,
        bty = "n")
 
 
 #############plot of fracdiff with forest cover 
 lm_frac_diff <- lm(truefracdiff ~ forest_1km, data = fracdiff)
 
-site_colors <- c("red", "blue", "black", "purple", "orange3")
+site_colors <- c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3")
 site_shapes <- c(16, 17, 8, 15, 18)  
 
 names(site_colors) <- unique(fracdiff$site)
@@ -484,7 +482,7 @@ legend("topleft", legend = names(site_colors),
 lm_Vol_diff <- lm(truefracdiff ~ calculated_mean_noise, data = fracdiff)
 summary_stats <- summary(lm_Vol_diff)
 
-site_colors <- c("red", "blue", "black", "purple", "orange3")
+site_colors <- c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3")
 site_shapes <- c(16, 17, 8, 15, 18)  
 
 names(site_colors) <- unique(fracdiff$site)
@@ -492,7 +490,7 @@ names(site_shapes) <- unique(fracdiff$site)
 
 plot(fracdiff$calculated_mean_noise, fracdiff$truefracdiff, 
      type = "n",  
-     xlab = "Cicada Noise Index", 
+     xlab = "Cicada Volume Index", 
      ylab = "Difference in  % of Surveys with Caterpillars",
      xlim = range(fracdiff$calculated_mean_noise, na.rm = TRUE),
      ylim = range(fracdiff$truefracdiff , na.rm = TRUE)
@@ -512,7 +510,8 @@ legend("topleft",
        legend = names(site_colors), 
        col = site_colors,
        pch = site_shapes,
-       cex = 1)
+       cex = 1,
+       bty = "n")
 
 
 #Graph of each site on one plot //////////
@@ -525,7 +524,7 @@ names(site_shapes) <- unique(NoisePredation$Name)
 plot(NoisePredation$mean_noise, NoisePredation$pctBird,
      type = "n",  # Create empty plot to layer points later
      xlab = "Cicada Volume Index",
-     ylab = "Bird Predation")
+     ylab = "% Bird Predation")
 
 for (site in unique(NoisePredation$Name)) {
   points(NoisePredation$mean_noise[NoisePredation$Name == site],

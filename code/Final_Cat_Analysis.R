@@ -5,8 +5,10 @@ library(gsheet)
 library(maps)
 library(sf)
 library(tidyr)
+library(tidyverse)
 library(ggplot2)
 library(readxl)
+library(reshape2)
 
 #Datasets
 LandscapeCover = read.csv("data/sites_2022-09-19.csv")
@@ -547,3 +549,57 @@ legend("topright", legend = names(site_colors),
        col = site_colors, 
        pch = site_shapes, 
        cex = 1)
+
+
+
+#Stacked bar graph for the strike marks
+
+dfsum <- df %>%
+  group_by(Name) %>%
+  summarize(Bird = sum(Bird),
+            Mammal = sum(Mammal),
+            Arthropod = sum(Arthropod),
+            Unidentified = sum(Unidentified)) %>%
+  pivot_longer(cols = c("Bird","Mammal", "Arthropod", "Unidentified"), names_to = "Category", values_to = "Count") %>%
+  mutate(
+    Name = case_when(
+      Name == "Triangle Land Conservancy - Johnston Mill Nature Preserve" ~ "Johnston Mill",
+      Name == "UNC Chapel Hill Campus" ~ "UNC",
+      Name == "Prairie Ridge Ecostation" ~ "Prairie Ridge",
+      Name == "Eno River State Park" ~ "Eno River",
+      Name == "NC Botanical Garden" ~ "NCBG",
+    TRUE ~ Name)) 
+
+my_colors <- c("orange", "skyblue", "lightgrey", "pink")
+mytable <- xtabs(Count ~ Category + Name, data = dfsum)
+
+
+Stacked_Bar <- barplot(
+  mytable,
+  beside = FALSE,
+  col = my_colors,
+  legend = rownames(mytable),
+  names.arg = colnames(mytable),
+  xlab = "Name",
+  ylab = "Count",
+  main = "Clay Caterpillar Strike Marks at Each Site",
+  ylim = c(0, 90)
+)
+
+totals <- colSums(mytable)
+text(Stacked_Bar, totals, labels = totals, pos = 3)
+
+stackHeights = apply(mytable, 2, cumsum)
+stackLower = rbind(0, stackHeights[-nrow(stackHeights), ])
+stackMidpoints = (stackHeights + stackLower) / 2
+
+for (j in seq_len(ncol(mytable))) {
+  for (i in seq_len(nrow(mytable))) {
+    countValue <- mytable[i, j]
+    if (countValue > 0) {
+      text(Stacked_Bar[j], stackMidpoints[i, j], labels = countValue, cex=0.8)
+    }
+  }
+}
+
+

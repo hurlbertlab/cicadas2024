@@ -552,8 +552,9 @@ legend("topright", legend = names(site_colors),
 
 
 
-#Stacked bar graph for the strike marks
 
+
+#Stacked bar graph for the strike marks
 dfsum <- df %>%
   group_by(Name) %>%
   summarize(Bird = sum(Bird),
@@ -572,6 +573,7 @@ dfsum <- df %>%
 
 my_colors <- c("orange", "skyblue", "lightgrey", "pink")
 mytable <- xtabs(Count ~ Category + Name, data = dfsum)
+mytable <- mytable[, order(mytable["Bird", ], decreasing = TRUE)]
 
 
 Stacked_Bar <- barplot(
@@ -581,9 +583,9 @@ Stacked_Bar <- barplot(
   legend = rownames(mytable),
   names.arg = colnames(mytable),
   xlab = "Name",
-  ylab = "Count",
-  main = "Clay Caterpillar Strike Marks at Each Site",
-  ylim = c(0, 90)
+  ylab = "Predation",
+  main = "Clay Caterpillar Predation",
+  ylim = c(0, 100)
 )
 
 totals <- colSums(mytable)

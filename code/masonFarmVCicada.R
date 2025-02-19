@@ -49,7 +49,7 @@ sound_MasonFarm <- sound_MasonFarm[-c(2,4,5)]
 
 #Now I will bind it with a file with the confidence levels for 25 Meters
 confidence_masonFarm <- read.csv(paste0("data/masonFarm/BirdNET_CombinedTable_High.csv"))
-masonFarmConf25m <- full_join(sound_MasonFarm, confidence_masonFarm, by = c('file' = 'File'))|>
+masonFarmConf25m <- left_join(sound_MasonFarm, confidence_masonFarm, by = c('file' = 'File'))|>
   drop_na(max_running_avg)
 write.csv(masonFarmConf25m, "data/masonFarmConf25m.csv")
 

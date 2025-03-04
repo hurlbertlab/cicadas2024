@@ -64,6 +64,12 @@ for(i in 1:length(unique_broods)) {
     ) #end mutate
 } #end for loop
 
+#every county that has only one brood needs to get that brood assigned.
+#every county that has more than one brood needs to get BOTH of those broods assigned and then have emergence1 + emergence2 within the 2019-2024 time frame. 
+#so. actually every county needs to just have two broods assigned to start with based on matching in the 2019/2024 time frame. 
+#nah, ignore the time frame. What if we add new data this summer? Go back to even earlier stuff that Bella did with the nestboxes to add these in.
+
+
 # okay, so now emergence year is either 1 or NA... 
 # and what we want at the end is a -3:+3, where emergence year is actually a 0
 # and we ? remove counties where there's brood emerging at all or like.. ig those could be our controls.. "controls" is an interesting concept in a statistical model like this. What's the oak paper do
@@ -75,7 +81,34 @@ for(i in 1:length(unique_broods)) {
     ungroup() %>%
     #make emergence_year year 0
     mutate(emergence_year = case_when(emergence_year == 1 ~ 0,
-                                      .default = emergence_year))
+                                      .default = emergence_year)) %>%
+    #add emergence years
+    left_join(emergence_years, by = "BROOD_NAME")
+
+# okay so the idea is create cicada year values for both emergence 1 and 2 and then use the minimum absolute value between the two to create a standardized cicada year value. 
+  
+  snakes_year_county <- snakes_year_county %>%
+    #make new columns
+    mutate(em1_cicada_year = NA,
+           em2_cicada_year = NA) %>%
+    #populate new columns
+    mutate(em1_cicada_year = case_when(
+      year == emergence_three ~ 0,
+      FALSE ~ em1_cicada_year
+    ),
+    em2_cicada_year = case_when(
+      year == emergence_four ~ 0,
+      FALSE ~ em2_cicada_year
+    ))
+  
+  # So now each emergence Year is either 0 or NA, for both emergence 1 and 2... 
+  # So now, fill in NA with some integer that indicates how far away it is from an emergence year 
+  # em1_cicada_year == Year - emergence_three
+  snakes_year_county_C <- snakes_year_county %>%
+    mutate(new_yar = year)
+  
+    mutate(em1_cicada_year = ifelse(is.na(em1_cicada_year) == TRUE, year - emergence_three, em1_cicada_year),
+           em2_cicada_year = ifelse(is.na(em2_cicada_year) == TRUE, year - emergence_four, em2_cicada_year)) 
   
   temp_nbroods <- snakes_year_county %>%
     group_by(ST_CNTY_CODE) %>%

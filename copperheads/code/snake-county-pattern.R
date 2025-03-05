@@ -17,11 +17,22 @@ snakes_year_county <- read.csv("copperheads/data/snakes/snakes_county_year.csv")
          cycle = NA)
 
 #load in cicada and county data
-cicada <- st_read(dsn = "copperheads/data/cicada/periodical_cicada_with_county.gdb")
+cicada <- st_drop_geometry(st_read(dsn = "copperheads/data/cicada/periodical_cicada_with_county.gdb")) %>%
+  dplyr::select(BROOD_CNTY_OCCURRENCE:NAME)
 
-emergence_years <- read.csv("copperheads/data/cicada/cicada_emergence_years.csv") %>%
+emergence_years <- read.csv("copperheads/data/cicada/cicada_emergence_years.csv")# %>%
   #filter to only the broods with emergence 2019 onwards
-  filter(!is.na(emergence_2019_through_2024))
+  #filter(!is.na(emergence_2019_through_2024))
+  #okay so there are 5 broods. We ONLY care about the potential for double broods in counties if they are THESE broods. Double/triple/quad brood counties where there's only ONE..hm. No, because. there could be an emergence in 2018 and then again in 2019 and that affects predictions. Sucks to remove 161 counties tho. 
+
+#connect each county with it's associated broods
+county_broods <- cicada %>%
+  left_join(emergence_years, by = "BROOD_NAME") %>%
+  #we'll filter out counties with more than two broods. It gets too complicated
+  filter(MULT_BROOD <= 2)
+
+
+
 
 #get the unique broods
 unique_broods <- unique(emergence_years$BROOD_NAME)

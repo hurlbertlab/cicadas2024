@@ -4,4 +4,7 @@
 
 ###########################
 library(reticulate)
-use_condaenv("birdnet", required = TRUE)
+library(birdnetR)
+
+# Initialize the TFLite BirdNET Model
+model <- birdnet_model_tflite("v2.4")

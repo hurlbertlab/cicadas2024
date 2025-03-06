@@ -19,6 +19,11 @@ Cicadanoise = read.csv("data/inputated_values.csv")
 WeeklyCicadaNoise = read.csv("data/cicada_noise.csv")
 NoisePredation <- read_excel("~/Downloads/NoisePredation.xlsx")
 
+# Cleaning up dates in WeeklyCicadaNoise
+#WeeklyCicadaNoise$jd[WeeklyCicadaNoise$site == 'eno' & weeklyCicadaNoise$jd == 137] = 129
+
+
+
 # Function for substituting values based on a condition using dplyr:mutate
 mutate_cond <- function(.data, condition, ..., envir = parent.frame()) {
   condition <- eval(substitute(condition), .data, envir)
@@ -36,19 +41,7 @@ Mode = function(x){
   return(max(mod))
 }
 
-surveyData = # merged dataframe of Survey and arthropod Sighting tables for a single site
-  ordersToInclude = 'caterpillar'
 
-minLength = 0
-jdRange = c(1,365)
-outlierCount = 10000
-plot = FALSE
-plotVar = 'fracSurveys' # 'meanDensity' or 'fracSurveys' or 'meanBiomass'
-minSurveyCoverage = 0.8
-allDates = TRUE
-new = TRUE
-color = 'black'
-allCats = TRUE
 
 meanDensityByWeek = function(surveyData, # merged dataframe of Survey and arthropodSighting tables for a single site
                              ordersToInclude = 'All', 
@@ -208,11 +201,36 @@ fracdiff <- fracdataframe %>%
   distinct(site, truefracdiff, forest_1km, calculated_mean_noise)
 
 
-glm <- glm(truefrac ~ site + year_2024, data = fracdataframe, family = quasibinomial(link = "logit"))
-summary(glm)
 
-model1 <- glm(truefrac ~ site + year_2024 + site*year_2024, data = fracdataframe, family = quasibinomial(link = "logit"))
-summary(model1)
+# Statistical analysis at the branch level using glm
+# Need "raw" data at the survey level for our subset of sites
+
+# For each survey ID, specify whether the survey recorded a caterpillar or not
+rawdata <- fullDataset %>%
+  filter(Name %in% site_list, 
+         Year %in% 2021:2024,
+         julianday %in% 135:213) %>%
+  mutate(cicadayear = ifelse(Year == 2024, 1, 0),
+         cicadaperiod = ifelse(julianday <= 165, 1, 0),
+         siteFactor = case_when(
+           Name == 'UNC Chapel Hill Campus' ~ 'e UNC',
+           Name == 'Prairie Ridge Ecostation' ~ 'd Prairie Ridge',
+           Name == 'NC Botanical Garden' ~ 'c NCBG',
+           Name == 'Triangle Land Conservancy - Johnston Mill Nature Preserve' ~ 'a Johnston Mill',
+           Name == 'Eno River State Park' ~ 'b Eno River SP')
+         ) %>%
+  group_by(ID, Name, siteFactor, Year, julianday, cicadayear, cicadaperiod) %>%
+  summarize(caterpillar = ifelse(sum(Quantity[Group == 'caterpillar'], na.rm = TRUE) > 0, 1, 0))
+
+
+
+dur.cicada <- glm(caterpillar ~ siteFactor + cicadayear + siteFactor*cicadayear, 
+                  data = rawdata[rawdata$cicadaperiod ==1, ], family = binomial(link = "logit"))
+
+post.cicada <- glm(caterpillar ~ siteFactor + cicadayear + siteFactor*cicadayear, 
+                  data = rawdata[rawdata$cicadaperiod == 0, ], family = binomial(link = "logit"))
+
+
 
 
 #fracdataframe <- fracdataframe %>%

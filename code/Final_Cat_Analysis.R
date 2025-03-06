@@ -192,8 +192,11 @@ Cicadanoise <- Cicadanoise %>%
 
 fracdataframe <- fracdataframe %>%
   left_join(Cicadanoise %>% select(Name, calculated_mean_noise), by = c("site" = "Name")) %>%
-  mutate(cicada_present = ifelse(year_2024 == TRUE & during_cicada == TRUE, 1, 0))
-
+  mutate(Caterpillars_Present = ifelse(truefrac > 0, 1, 0),
+         year_2024 = ifelse(year_2024, 1, 0),
+         during_cicada = ifelse(during_cicada, 1, 0),
+         cicada_present = ifelse(year_2024 & during_cicada, 1,))
+fracdataframe$site <- factor(fracdataframe$site)
 
 fracdiff <- fracdataframe %>%
   group_by(site, year_2024, forest_1km, calculated_mean_noise) %>%
@@ -203,6 +206,14 @@ fracdiff <- fracdataframe %>%
   group_by(site) %>%
   mutate(truefracdiff = truefrac[year_2024 == 1] - truefrac[year_2024 == 0]) %>%
   distinct(site, truefracdiff, forest_1km, calculated_mean_noise)
+
+
+glm <- glm(truefrac ~ site + year_2024, data = fracdataframe, family = quasibinomial(link = "logit"))
+summary(glm)
+
+model1 <- glm(truefrac ~ site + year_2024 + site*year_2024, data = fracdataframe, family = quasibinomial(link = "logit"))
+summary(model1)
+
 
 #fracdataframe <- fracdataframe %>%
 #  mutate(

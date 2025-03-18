@@ -66,5 +66,8 @@ Circles <- data.frame(
 Eno.map <- get_stadiamap(ERSP.area, zoom = 18, maptype = "stamen_terrain")
 
 ggmap(Eno.map) +
-  geom_point(data = Circles, aes(x = longitude, y = latitude), color = "black", pch = 1, size = 4) 
+  geom_point(data = Circles, aes(x = longitude, y = latitude), color = "black", pch = 1, size = 4) +
+  geom_label_repel(data = Circles, aes(x = longitude, y = latitude, label = Circle), 
+                   color = "darkblue", size = 5, box.padding = 1.7) +
+  theme_minimal() 
 

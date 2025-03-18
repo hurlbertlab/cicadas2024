@@ -184,7 +184,7 @@ fracdataframe <- fracdataframe %>%
   mutate(Caterpillars_Present = ifelse(truefrac > 0, 1, 0),
          year_2024 = ifelse(year_2024, 1, 0),
          during_cicada = ifelse(during_cicada, 1, 0),
-         cicada_present = ifelse(year_2024 & during_cicada, 1,))
+         cicada_present = ifelse(year_2024 & during_cicada, 1, 0))
 fracdataframe$site <- factor(fracdataframe$site)
 
 fracdiff <- fracdataframe %>%
@@ -237,7 +237,6 @@ post.cicada <- glm(caterpillar ~ siteFactor + cicadayear + siteFactor*cicadayear
 fracdiff <- fracdiff %>%
   mutate(
     truefracdiff = truefracdiff * 100,
-    calculated_mean_noise = calculated_mean_noise * 100,
     forest_1km = forest_1km * 100
   )
 
@@ -296,7 +295,6 @@ NoisePredation = NoisePredation %>%
   left_join(ForestCover %>% select(Name, forest_1km)) %>%
   group_by(Name) 
 
-
 #lm models //////////
 lm_forest_frac_diff <- lm(truefracdiff ~ forest_1km, data = fracdiff)
 summary(lm_forest_frac_diff)
@@ -304,20 +302,20 @@ summary(lm_forest_frac_diff)
 lm_noise_frac_diff <- lm(truefracdiff ~ calculated_mean_noise, data = fracdiff)
 summary(lm_noise_frac_diff)
 
-final_data_1st_Deployment_Forest <- lm(pctBird ~ forest_1km, data = final_data_1st_Deployment)
-summary(final_data_1st_Deployment_Forest)
-
-final_data_1st_Deployment_Noise <- lm(pctBird ~ mean_noise, data = final_data_1st_Deployment)
-summary(final_data_1st_Deployment_Forest)
-
-final_data_2nd_Deployment_Forest <- lm(pctBird ~ forest_1km, data = final_data_2nd_Deployment)
-summary(final_data_2nd_Deployment_Forest)
-
-final_data_2nd_Deployment_Noise <- lm(pctBird ~ mean_noise, data = final_data_2nd_Deployment)
-summary(final_data_2nd_Deployment_Forest)
-
-Mean_Noise_additive <- lm(pctBird ~ mean_noise + Name -1, data = NoisePredation)
+Mean_Noise_additive <- lm(pctBird ~ mean_noise + Name, data = NoisePredation)
 summary(Mean_Noise_additive)
+
+#final_data_1st_Deployment_Forest <- lm(pctBird ~ forest_1km, data = final_data_1st_Deployment)
+#summary(final_data_1st_Deployment_Forest)
+
+#final_data_1st_Deployment_Noise <- lm(pctBird ~ mean_noise, data = final_data_1st_Deployment)
+#summary(final_data_1st_Deployment_Forest)
+
+#final_data_2nd_Deployment_Forest <- lm(pctBird ~ forest_1km, data = final_data_2nd_Deployment)
+#summary(final_data_2nd_Deployment_Forest)
+
+#final_data_2nd_Deployment_Noise <- lm(pctBird ~ mean_noise, data = final_data_2nd_Deployment)
+#summary(final_data_2nd_Deployment_Forest)
 
 
 ###############data plotted
@@ -471,6 +469,10 @@ legend("topleft",
 
 #############plot of fracdiff with forest cover 
 lm_frac_diff <- lm(truefracdiff ~ forest_1km, data = fracdiff)
+summary_stats_Forest <- summary(lm_frac_diff)
+
+p_value_Forest <- summary_stats_Forest$coefficients["forest_1km", 4]
+p_Forest_Text <- paste("Forest 1km Regression ( P =", round(p_value_Forest,3),")")
 
 site_colors <- c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3")
 site_shapes <- c(16, 17, 8, 15, 18)  
@@ -496,16 +498,21 @@ for (site in unique(fracdiff$site)) {
 
 abline(lm_frac_diff, col = "black", lwd = 2)
 
-legend("topleft", legend = names(site_colors), 
-       col = site_colors, 
-       pch = site_shapes,
-       cex = 1,
-       bty = "n")
+legend("topleft", 
+       legend = c(names(site_colors), p_Forest_Text),
+       col = c(site_colors, "black"), 
+       pch = c(site_shapes, NA),
+       lty = c(rep(NA, length(site_colors)), 1), 
+       lwd = c(rep(NA, length(site_colors)), 2),
+       cex = 1)
 
 
 #####cicada volume graph
 lm_Vol_diff <- lm(truefracdiff ~ calculated_mean_noise, data = fracdiff)
 summary_stats <- summary(lm_Vol_diff)
+
+p_value_Vol_diff <- summary_stats$coefficients["calculated_mean_noise", 4]
+p_Vol_Text <- paste("Mean Noise Regression ( P =", round(p_value_Vol_diff,3),")")
 
 site_colors <- c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3")
 site_shapes <- c(16, 17, 8, 15, 18)  
@@ -532,14 +539,21 @@ for (site in unique(fracdiff$site)) {
 abline(lm_Vol_diff, col = "black", lwd = 2)
 
 legend("topleft",
-       legend = names(site_colors), 
-       col = site_colors,
-       pch = site_shapes,
-       cex = 1,
-       bty = "n")
+       legend = c(names(site_colors), p_Vol_Text),
+       col = c(site_colors, "black"), 
+       pch = c(site_shapes, NA),
+       lty = c(rep(NA, length(site_colors)), 1), 
+       lwd = c(rep(NA, length(site_colors)), 2),
+       cex = 1)
 
 
 #Graph of each site on one plot //////////
+Mean_Noise_additive <- lm(pctBird ~ mean_noise +Name, data = NoisePredation)
+summary_stats_volume <- summary(Mean_Noise_additive)
+coef_full <- coef(Mean_Noise_additive)
+intercept <- coef_full[1]
+slope <- coef_full["mean_noise"]
+
 site_colors <- c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3")
 site_shapes <- c(16, 17, 8, 15, 18)  
 
@@ -547,7 +561,7 @@ names(site_colors) <- unique(NoisePredation$Name)
 names(site_shapes) <- unique(NoisePredation$Name)
 
 plot(NoisePredation$mean_noise, NoisePredation$pctBird,
-     type = "n",  # Create empty plot to layer points later
+     type = "n",
      xlab = "Cicada Volume Index",
      ylab = "% Bird Predation")
 
@@ -559,8 +573,7 @@ for (site in unique(NoisePredation$Name)) {
          cex = 1.5)
 }
 
-lm_overall <- lm(pctBird ~ mean_noise, data = NoisePredation)
-abline(lm_overall, col = "gray50", lwd = 2, lty = 3)
+abline(a = intercept, b = slope, col = "gray50", lwd = 2, lty = 3)
 
 for (site in unique(NoisePredation$Name)) {
   subset_data <- NoisePredation[NoisePredation$Name == site, ]
@@ -568,9 +581,17 @@ for (site in unique(NoisePredation$Name)) {
   abline(lm_site, col = site_colors[site], lwd = 1.5)
 }
 
-legend("topright", legend = names(site_colors),
-       col = site_colors, 
-       pch = site_shapes, 
+summary_model <- summary(Mean_Noise_additive)
+p_value_mean_noise <- summary_model$coefficients["mean_noise", 4]
+p_text <- paste("Mean Noise Regression ( P =", round(p_value_mean_noise,3),")")
+
+
+legend("topright", 
+       legend = c(names(site_colors), p_text),
+       col = c(site_colors, "grey50"), 
+       pch = c(site_shapes, NA),
+       lty = c(rep(NA, length(site_colors)), 3), 
+       lwd = c(rep(NA, length(site_colors)), 2),
        cex = 1)
 
 

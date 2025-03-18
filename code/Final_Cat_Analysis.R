@@ -330,7 +330,12 @@ summary(Mean_Noise_interaction)
 
 
 ###############data plotted
-par(mfrow = c(1, 2))
+layout(matrix(c(1, 2, 3, 3), nrow = 2, ncol = 2, byrow = TRUE), 
+       heights = c(4, 1.5))
+
+par(mar = c(4, 4, 4, 2))
+
+par(mar = c(4, 4, 4, 2))
 
 #During cicada emergence
 cicada_analysis <- fracdataframe %>%
@@ -354,13 +359,17 @@ site_colors <- c(
 plot(0, 0, 
      xlim = c(0.5, 2.5), 
      ylim = c(-0.005, 0.22),
+     cex.lab =1.35,
+     las = 1,
+     lwd = 3, 
+     cex = 3,
      type = "n",
      xaxt = "n",
      yaxt = "n", 
      xlab = "",
      ylab = "% Surveys with Caterpillars",
-     main = "During Cicada Emergence")
-axis(1, at = c(1, 2), labels = c("Pre-2024", "2024"))
+     main = "During Cicada Emergence\nMay 14 - June 13")
+axis(1, at = c(1, 2), labels = c("Pre-2024", "2024"), cex.axis = 1.35)
 
 y_ticks <- seq(0, 0.2, by = 0.05) 
 axis(2, at = y_ticks, labels = paste0(y_ticks * 100))
@@ -396,14 +405,8 @@ for (site in unique(cicada_analysis$site)) {
            col = site_colors[site],
            lwd = .7)
 }
-legend("topleft", 
-       legend = names(site_colors),
-       col = site_colors,
-       lwd = 2,
-       pch = 16,
-       cex = 1,
-       bty = "n")
 
+text(2.3, 0.21, "p = 0.0193", cex = 1.35, adj = 1)
 
 #########After cicadas plot
 cicada_analysis_nocicada <- fracdataframe %>%
@@ -427,13 +430,17 @@ site_colors <- c(
 plot(0, 0, 
      xlim = c(0.5, 2.5), 
      ylim = c(-0.005, 0.22),
+     cex.lab =1.35,
+     las = 1,
+     lwd = 3, 
+     cex = 3,
      type = "n",
      xaxt = "n",
      yaxt = "n",
      xlab = "",
      ylab = "% Surveys with Caterpillars",
-     main = "After Cicada Emergence")
-axis(1, at = c(1, 2), labels = c("Pre-2024", "2024"))
+     main = "After Cicada Emergence\nJune 14 - July 31")
+axis(1, at = c(1, 2), labels = c("Pre-2024", "2024"), cex.axis = 1.35)
 
 y_ticks <- seq(0, 0.2, by = 0.05) 
 axis(2, at = y_ticks, labels = paste0(y_ticks * 100))
@@ -469,13 +476,26 @@ for (site in unique(cicada_analysis_nocicada$site)) {
            col = site_colors[site],
            lwd = .7)
 }
-legend("topleft", 
-       legend = names(site_colors), 
+
+text(2.3, 0.21, "p = 0.013", cex = 1.35, adj = 1)
+
+short_names <- c(
+  "UNC Chapel Hill Campus" = "UNC Campus",
+  "NC Botanical Garden" = "Botanical Garden",
+  "Eno River State Park" = "Eno River",
+  "Prairie Ridge Ecostation" = "Prairie Ridge",
+  "Triangle Land Conservancy - Johnston Mill Nature Preserve" = "Johnston Mill"
+)
+
+par(mar = c(0, 0, 0, 0))
+plot.new()
+legend("top", 
+       legend = short_names, 
        col = site_colors, 
        lwd = 2, 
        pch = 16, 
-       cex = 1,
-       bty = "n")
+       cex = 1.35, 
+       horiz = TRUE)
 
 
 #############plot of fracdiff with forest cover 
@@ -578,6 +598,8 @@ plot(NoisePredation2$mean_noise, NoisePredation2$pctBird,
      pch = NoisePredation2$shapes,
      xlab = "Cicada Volume Index",
      ylab = "% Bird Predation",
+     cex.axis = 1.3,
+     cex.lab =1.3,
      cex = 2)
 
 # Add each regression line manually; reference line is for Eno
@@ -592,10 +614,24 @@ abline(a = summary(Mean_Noise_additive)$coefficients[1, 1] +
        b = summary(Mean_Noise_additive)$coefficients[2, 1],
        col = site_df$colors[site_df$Name == 'JM'], 
        lwd = 2)
-#abline(a = intercept, b = slope, col = "gray50", lwd = 2, lty = 3)
-
-
-
+# NCBG
+abline(a = summary(Mean_Noise_additive)$coefficients[1, 1] +
+         summary(Mean_Noise_additive)$coefficients[4, 1], 
+       b = summary(Mean_Noise_additive)$coefficients[2, 1],
+       col = site_df$colors[site_df$Name == 'NCBG'], 
+       lwd = 2)
+# PRE
+abline(a = summary(Mean_Noise_additive)$coefficients[1, 1] +
+         summary(Mean_Noise_additive)$coefficients[5, 1], 
+       b = summary(Mean_Noise_additive)$coefficients[2, 1],
+       col = site_df$colors[site_df$Name == 'PRE'], 
+       lwd = 2)
+#UNC
+abline(a = summary(Mean_Noise_additive)$coefficients[1, 1] +
+         summary(Mean_Noise_additive)$coefficients[6, 1], 
+       b = summary(Mean_Noise_additive)$coefficients[2, 1],
+       col = site_df$colors[site_df$Name == 'UNC'], 
+       lwd = 2)
 
 for (site in unique(NoisePredation$Name)) {
   subset_data <- NoisePredation[NoisePredation$Name == site, ]
@@ -605,17 +641,16 @@ for (site in unique(NoisePredation$Name)) {
 
 summary_model <- summary(Mean_Noise_additive)
 p_value_mean_noise <- summary_model$coefficients["mean_noise", 4]
-p_text <- paste("Mean Noise Regression ( P =", round(p_value_mean_noise,3),")")
+p_text <- paste("Cicada Volume ( P =", round(p_value_mean_noise,3),")")
 
 
 legend("topright", 
-       legend = c(names(site_colors), p_text),
-       col = c(site_colors, "grey50"), 
-       pch = c(site_shapes, NA),
-       lty = c(rep(NA, length(site_colors)), 3), 
-       lwd = c(rep(NA, length(site_colors)), 2),
-       cex = 1)
-
+       legend = c(site_df$Name, p_text),
+       col = c(site_df$colors, "black"), 
+       pch = c(site_df$shapes, NA),
+       lty = c(rep(NA, length(site_df$Name)), NA), 
+       lwd = c(rep(NA, length(site_df$Name)), NA),
+       cex = 1.3)
 
 
 

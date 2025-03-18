@@ -293,7 +293,15 @@ final_data_2nd_Deployment = WeeklyCicadaNoise %>%
 #All deployment data showing effect of each site for bird strikes and Cicada Volume Index
 NoisePredation = NoisePredation %>%
   left_join(ForestCover %>% select(Name, forest_1km)) %>%
-  group_by(Name) 
+  group_by(Name) %>%
+  mutate(Name = case_when(
+    Name == "Eno River State Park" ~ "ERSP",
+    Name == "Triangle Land Conservancy - Johnston Mill Nature Preserve" ~ "JM",
+    Name == "NC Botanical Garden" ~ "NCBG",
+    Name == "Prairie Ridge Ecostation" ~ "PRE",
+    Name == "UNC Chapel Hill Campus" ~ "UNC",
+    TRUE ~ NA  # For any unmatched values, assign NA
+  ))
 
 #lm models //////////
 lm_forest_frac_diff <- lm(truefracdiff ~ forest_1km, data = fracdiff)
@@ -304,6 +312,9 @@ summary(lm_noise_frac_diff)
 
 Mean_Noise_additive <- lm(pctBird ~ mean_noise + Name, data = NoisePredation)
 summary(Mean_Noise_additive)
+
+Mean_Noise_interaction <- lm(pctBird ~ mean_noise + Name + mean_noise*Name, data = NoisePredation)
+summary(Mean_Noise_interaction)
 
 #final_data_1st_Deployment_Forest <- lm(pctBird ~ forest_1km, data = final_data_1st_Deployment)
 #summary(final_data_1st_Deployment_Forest)
@@ -554,26 +565,37 @@ coef_full <- coef(Mean_Noise_additive)
 intercept <- coef_full[1]
 slope <- coef_full["mean_noise"]
 
-site_colors <- c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3")
-site_shapes <- c(16, 17, 8, 15, 18)  
 
-names(site_colors) <- unique(NoisePredation$Name)
-names(site_shapes) <- unique(NoisePredation$Name)
+site_df = data.frame(Name = unique(NoisePredation$Name),
+                     colors = c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3"),
+                     shapes = c(16, 17, 8, 15, 18))
 
-plot(NoisePredation$mean_noise, NoisePredation$pctBird,
-     type = "n",
+NoisePredation2 = left_join(NoisePredation, site_df, by = 'Name')
+
+
+plot(NoisePredation2$mean_noise, NoisePredation2$pctBird,
+     col = NoisePredation2$colors, 
+     pch = NoisePredation2$shapes,
      xlab = "Cicada Volume Index",
-     ylab = "% Bird Predation")
+     ylab = "% Bird Predation",
+     cex = 2)
 
-for (site in unique(NoisePredation$Name)) {
-  points(NoisePredation$mean_noise[NoisePredation$Name == site],
-         NoisePredation$pctBird[NoisePredation$Name == site],
-         col = site_colors[site],
-         pch = site_shapes[site],
-         cex = 1.5)
-}
+# Add each regression line manually; reference line is for Eno
+abline(a = summary(Mean_Noise_additive)$coefficients[1, 1], 
+       b = summary(Mean_Noise_additive)$coefficients[2, 1],
+       col = site_df$colors[site_df$Name == 'ERSP'], 
+       lwd = 2)
 
-abline(a = intercept, b = slope, col = "gray50", lwd = 2, lty = 3)
+# Johnston Mill regression line (intercept = "Intercept" + the Johnston Mill estimate)
+abline(a = summary(Mean_Noise_additive)$coefficients[1, 1] +
+         summary(Mean_Noise_additive)$coefficients[3, 1], 
+       b = summary(Mean_Noise_additive)$coefficients[2, 1],
+       col = site_df$colors[site_df$Name == 'JM'], 
+       lwd = 2)
+#abline(a = intercept, b = slope, col = "gray50", lwd = 2, lty = 3)
+
+
+
 
 for (site in unique(NoisePredation$Name)) {
   subset_data <- NoisePredation[NoisePredation$Name == site, ]

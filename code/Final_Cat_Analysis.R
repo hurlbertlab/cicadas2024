@@ -17,7 +17,7 @@ ForestCover = read.csv("data/ForestCover.csv")
 fullDataset = read.csv("data/fullDataset_2024-08-17.csv")
 Cicadanoise = read.csv("data/inputated_values.csv")
 WeeklyCicadaNoise = read.csv("data/cicada_noise.csv")
-NoisePredation <- read_excel("~/Downloads/NoisePredation.xlsx")
+NoisePredation <- read_excel("data/NoisePredation.xlsx")
 
 # Cleaning up dates in WeeklyCicadaNoise
 #WeeklyCicadaNoise$jd[WeeklyCicadaNoise$site == 'eno' & weeklyCicadaNoise$jd == 137] = 129

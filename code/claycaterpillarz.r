@@ -22,7 +22,7 @@ birdPred = df %>%
     
   
 plot(birdPred$jd[birdPred$Name == "Prairie Ridge Ecostation"], birdPred$pctBird[birdPred$Name == "Prairie Ridge Ecostation"], xlab = "Julian day", 
-     ylab = "% Bird Strikes", ylim = c(0, 60), xlim = c(135, 185), type = 'b', 
+     ylab = "% Bird Strikes", ylim = c(0, 60), xlim = c(135, 185), cex.axis = 1.3, cex.lab = 1.3, type = 'b', 
      col = '#CC79A7', cex = 1.5, pch = 15, lwd = 2)
 
 points(birdPred$jd[birdPred$Name == "NC Botanical Garden"], birdPred$pctBird[birdPred$Name == "NC Botanical Garden"], 
@@ -42,8 +42,11 @@ legend("topright", legend = c("Prairie Ridge Ecostation",
                              "NC Botanical Garden",
                              "Eno River State Park",
                              "UNC Chapel Hill Campus",
-                             "Johnston Mill"),
-       col = c("#CC79A7", "#D55E00", "black", "#0072B2", "yellow3"),
-       pch = c(15, 17, 8, 16, 18),
+                             "Johnston Mill",
+                             "Shaded = Cicadas Present"),
+       col = c("#CC79A7", "#D55E00", "black", "#0072B2", "yellow3", NA),
+       pch = c(15, 17, 8, 16, 18, NA),
        lwd = 2,
-       cex = 1)
+       cex = 1.3)
+
+rect(135, 0, 165, 60, col = rgb(0.5, 0.5, 0.5, 0.25), border = NA)

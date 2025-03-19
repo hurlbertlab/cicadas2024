@@ -35,8 +35,11 @@ ggmap(map) +
   geom_point(data = sites, aes(x = longitude, y = latitude), color = "black", size = 1) + 
   geom_label_repel(data = sites, aes(x = longitude, y = latitude, label = site_name), 
                   color = "darkblue", size = 5, box.padding = 1.7) +
+  labs(x = "Longitude", y = "Latitude", cex = 1.3) +
   theme_minimal() +
   theme(
+    axis.title = element_text(size = 14, face = "bold"),
+    axis.text = element_text(size = 12),
     legend.position = "right",
     legend.title = element_text(size = 12, face = "bold"),
     legend.text = element_text(size = 10),
@@ -69,5 +72,9 @@ ggmap(Eno.map) +
   geom_point(data = Circles, aes(x = longitude, y = latitude), color = "black", pch = 1, size = 4) +
   geom_label_repel(data = Circles, aes(x = longitude, y = latitude, label = Circle), 
                    color = "darkblue", size = 5, box.padding = 1.7) +
-  theme_minimal() 
+  labs(x = "Longitude", y = "Latitude") +
+  theme_minimal() +
+  theme(
+axis.title = element_text(size = 14, face = "bold"),
+axis.text = element_text(size = 12))
 

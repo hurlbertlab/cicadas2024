@@ -1,0 +1,11 @@
+"term","estimate","std.error","statistic","p.value"
+"(Intercept)",-4.44,1,-4.44,0
+"siteFactorb Eno River SP",1,1.12,0.9,0.37
+"siteFactorc NCBG",0.76,1.01,0.75,0.453
+"siteFactord Prairie Ridge",1.5,1,1.5,0.134
+"siteFactore UNC",-0.37,1.07,-0.35,0.729
+"cicadayear",2.38,1.02,2.34,0.019
+"siteFactorb Eno River SP:cicadayear",-1.33,1.14,-1.16,0.244
+"siteFactorc NCBG:cicadayear",-1.8,1.06,-1.7,0.09
+"siteFactord Prairie Ridge:cicadayear",-1.78,1.03,-1.74,0.082
+"siteFactore UNC:cicadayear",-2.17,1.23,-1.77,0.077

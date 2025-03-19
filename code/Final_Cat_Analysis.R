@@ -9,6 +9,7 @@ library(tidyverse)
 library(ggplot2)
 library(readxl)
 library(reshape2)
+library(broom)
 
 #Datasets
 LandscapeCover = read.csv("data/sites_2022-09-19.csv")
@@ -225,21 +226,34 @@ dur.cicada <- glm(caterpillar ~ siteFactor + cicadayear + siteFactor*cicadayear,
 post.cicada <- glm(caterpillar ~ siteFactor + cicadayear + siteFactor*cicadayear, 
                    data = rawdata[rawdata$cicadaperiod == 0, ], family = binomial(link = "cloglog"))
 
+glm_results_dur <- tidy(dur.cicada) %>%
+  mutate(
+    estimate = round(estimate, 2),
+    std.error = round(std.error, 2),
+    statistic = round(statistic, 2),
+    p.value = round(p.value, 3)
+  ) %>%
+  select(term, estimate, std.error, statistic, p.value) %>%
+  as.data.frame()
 
+write.csv(glm_results_dur, "glm_results_dur.csv", row.names = FALSE)
 
-#fracdataframe <- fracdataframe %>%
-#  mutate(
-#    truefrac = truefrac * 100,
-#    calculated_mean_noise = calculated_mean_noise * 100,
-#    forest_1km = forest_1km * 100
-#  )
+glm_results_post <- tidy(post.cicada) %>%
+  mutate(
+    estimate = round(estimate, 2),
+    std.error = round(std.error, 2),
+    statistic = round(statistic, 2),
+    p.value = round(p.value, 3)
+  ) %>%
+  select(term, estimate, std.error, statistic, p.value) %>%
+  as.data.frame()
+
+write.csv(glm_results_post, "glm_results_post.csv", row.names = FALSE)
 
 fracdiff <- fracdiff %>%
   mutate(
     truefracdiff = truefracdiff * 100,
-    forest_1km = forest_1km * 100
-  )
-
+    forest_1km = forest_1km * 100)
 
 #Dataset and filter for Clay Cat Predation and weekly cicada noise
 url = "https://docs.google.com/spreadsheets/d/1hi7iyi7xunriU2fvFpgNVDjO5ERML4IUgzTkQjLVYCo/edit?gid=0#gid=0"
@@ -265,7 +279,7 @@ final_data_1st_Deployment = WeeklyCicadaNoise %>%
     site == "ncbg" ~ "NC Botanical Garden",
     site == "pridge" ~ "Prairie Ridge Ecostation",
     site == "unc" ~ "UNC Chapel Hill Campus",
-    TRUE ~ NA_character_  # For any unmatched values, assign NA
+    TRUE ~ NA_character_  
   )) %>%
   left_join(ForestCover, by = 'Name') %>% 
   select(Name, forest_1km, mean_noise)  %>%
@@ -282,7 +296,7 @@ final_data_2nd_Deployment = WeeklyCicadaNoise %>%
     site == "ncbg" ~ "NC Botanical Garden",
     site == "pridge" ~ "Prairie Ridge Ecostation",
     site == "unc" ~ "UNC Chapel Hill Campus",
-    TRUE ~ NA_character_  # For any unmatched values, assign NA
+    TRUE ~ NA_character_
   )) %>%
   left_join(ForestCover, by = 'Name') %>% 
   select(Name, forest_1km, mean_noise)  %>%
@@ -332,9 +346,7 @@ summary(Mean_Noise_interaction)
 ###############data plotted
 layout(matrix(c(1, 2, 3, 3), nrow = 2, ncol = 2, byrow = TRUE), 
        heights = c(4, 1.5))
-
 par(mar = c(4, 4, 4, 2))
-
 par(mar = c(4, 4, 4, 2))
 
 #During cicada emergence
@@ -358,7 +370,7 @@ site_colors <- c(
 )
 plot(0, 0, 
      xlim = c(0.5, 2.5), 
-     ylim = c(-0.005, 0.22),
+     ylim = c(-0.005, 0.20),
      cex.lab =1.35,
      las = 1,
      lwd = 3, 
@@ -367,12 +379,12 @@ plot(0, 0,
      xaxt = "n",
      yaxt = "n", 
      xlab = "",
-     ylab = "% Surveys with Caterpillars",
-     main = "During Cicada Emergence\nMay 14 - June 13")
+     ylab = "% Surveys with Caterpillars")
 axis(1, at = c(1, 2), labels = c("Pre-2024", "2024"), cex.axis = 1.35)
+mtext("May 14 - June 13", side = 1, line = 2.5, cex = 1.35)
 
 y_ticks <- seq(0, 0.2, by = 0.05) 
-axis(2, at = y_ticks, labels = paste0(y_ticks * 100))
+axis(2, at = y_ticks, labels = paste0(y_ticks * 100), cex = 1.3)
 
 for (site in unique(cicada_analysis$site)) {
   site_data <- cicada_analysis[cicada_analysis$site == site, ]
@@ -406,7 +418,7 @@ for (site in unique(cicada_analysis$site)) {
            lwd = .7)
 }
 
-text(2.3, 0.21, "p = 0.0193", cex = 1.35, adj = 1)
+text(2.3, 0.19, "p = 0.019", cex = 1.35, adj = 1)
 
 #########After cicadas plot
 cicada_analysis_nocicada <- fracdataframe %>%
@@ -429,7 +441,7 @@ site_colors <- c(
 )
 plot(0, 0, 
      xlim = c(0.5, 2.5), 
-     ylim = c(-0.005, 0.22),
+     ylim = c(-0.005, 0.20),
      cex.lab =1.35,
      las = 1,
      lwd = 3, 
@@ -438,9 +450,9 @@ plot(0, 0,
      xaxt = "n",
      yaxt = "n",
      xlab = "",
-     ylab = "% Surveys with Caterpillars",
-     main = "After Cicada Emergence\nJune 14 - July 31")
+     ylab = "% Surveys with Caterpillars")
 axis(1, at = c(1, 2), labels = c("Pre-2024", "2024"), cex.axis = 1.35)
+mtext("June 14 - July 31", side = 1, line = 2.5, cex = 1.35)
 
 y_ticks <- seq(0, 0.2, by = 0.05) 
 axis(2, at = y_ticks, labels = paste0(y_ticks * 100))
@@ -477,11 +489,11 @@ for (site in unique(cicada_analysis_nocicada$site)) {
            lwd = .7)
 }
 
-text(2.3, 0.21, "p = 0.013", cex = 1.35, adj = 1)
+text(2.3, 0.19, "p = 0.013", cex = 1.35, adj = 1)
 
 short_names <- c(
   "UNC Chapel Hill Campus" = "UNC Campus",
-  "NC Botanical Garden" = "Botanical Garden",
+  "NC Botanical Garden" = "NC Botanical Garden",
   "Eno River State Park" = "Eno River",
   "Prairie Ridge Ecostation" = "Prairie Ridge",
   "Triangle Land Conservancy - Johnston Mill Nature Preserve" = "Johnston Mill"
@@ -494,7 +506,7 @@ legend("top",
        col = site_colors, 
        lwd = 2, 
        pch = 16, 
-       cex = 1.35, 
+       cex = 1.25, 
        horiz = TRUE)
 
 
@@ -503,7 +515,7 @@ lm_frac_diff <- lm(truefracdiff ~ forest_1km, data = fracdiff)
 summary_stats_Forest <- summary(lm_frac_diff)
 
 p_value_Forest <- summary_stats_Forest$coefficients["forest_1km", 4]
-p_Forest_Text <- paste("Forest 1km Regression ( P =", round(p_value_Forest,3),")")
+p_Forest_Text <- paste("P =", round(p_value_Forest,3),"")
 
 site_colors <- c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3")
 site_shapes <- c(16, 17, 8, 15, 18)  
@@ -511,31 +523,32 @@ site_shapes <- c(16, 17, 8, 15, 18)
 names(site_colors) <- unique(fracdiff$site)
 names(site_shapes) <- unique(fracdiff$site)
 
-plot(fracdiff$forest_1km, fracdiff$truefracdiff, 
+plot(fracdiff$forest_1km, fracdiff$truefracdiff,
      type = "n",  
      xlab = "% Forest Cover", 
      ylab = "Difference in  % of Surveys with Caterpillars",
      xlim = range(fracdiff$forest_1km, na.rm = TRUE),
-     ylim = range(fracdiff$truefracdiff, na.rm = TRUE)
-)
+     ylim = range(fracdiff$truefracdiff, na.rm = TRUE),
+     cex.axis = 1.3,
+     cex.lab =1.3)
 
 for (site in unique(fracdiff$site)) {
   points(fracdiff$forest_1km[fracdiff$site == site], 
          fracdiff$truefracdiff[fracdiff$site == site],
          col = site_colors[site],
          pch = site_shapes[site],
-         cex = 1.5)
+         cex = 2)
 }
 
 abline(lm_frac_diff, col = "black", lwd = 2)
 
 legend("topleft", 
-       legend = c(names(site_colors), p_Forest_Text),
+       legend = c(short_names[names(site_colors)], p_Forest_Text),
        col = c(site_colors, "black"), 
        pch = c(site_shapes, NA),
        lty = c(rep(NA, length(site_colors)), 1), 
        lwd = c(rep(NA, length(site_colors)), 2),
-       cex = 1)
+       cex = 1.3)
 
 
 #####cicada volume graph
@@ -543,7 +556,7 @@ lm_Vol_diff <- lm(truefracdiff ~ calculated_mean_noise, data = fracdiff)
 summary_stats <- summary(lm_Vol_diff)
 
 p_value_Vol_diff <- summary_stats$coefficients["calculated_mean_noise", 4]
-p_Vol_Text <- paste("Mean Noise Regression ( P =", round(p_value_Vol_diff,3),")")
+p_Vol_Text <- paste("P =", round(p_value_Vol_diff,3),"")
 
 site_colors <- c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3")
 site_shapes <- c(16, 17, 8, 15, 18)  
@@ -556,7 +569,9 @@ plot(fracdiff$calculated_mean_noise, fracdiff$truefracdiff,
      xlab = "Cicada Volume Index", 
      ylab = "Difference in  % of Surveys with Caterpillars",
      xlim = range(fracdiff$calculated_mean_noise, na.rm = TRUE),
-     ylim = range(fracdiff$truefracdiff , na.rm = TRUE)
+     ylim = range(fracdiff$truefracdiff , na.rm = TRUE),
+     cex.axis = 1.3,
+     cex.lab =1.3
 )
 
 for (site in unique(fracdiff$site)) {
@@ -564,18 +579,18 @@ for (site in unique(fracdiff$site)) {
          fracdiff$truefracdiff[fracdiff$site == site],
          col = site_colors[site],
          pch = site_shapes[site],
-         cex = 1.5)
+         cex = 2)
 }
 
 abline(lm_Vol_diff, col = "black", lwd = 2)
 
 legend("topleft",
-       legend = c(names(site_colors), p_Vol_Text),
+       legend = c(short_names[names(site_colors)], p_Vol_Text),
        col = c(site_colors, "black"), 
        pch = c(site_shapes, NA),
        lty = c(rep(NA, length(site_colors)), 1), 
        lwd = c(rep(NA, length(site_colors)), 2),
-       cex = 1)
+       cex = 1.35)
 
 
 #Graph of each site on one plot //////////
@@ -641,11 +656,11 @@ for (site in unique(NoisePredation$Name)) {
 
 summary_model <- summary(Mean_Noise_additive)
 p_value_mean_noise <- summary_model$coefficients["mean_noise", 4]
-p_text <- paste("Cicada Volume ( P =", round(p_value_mean_noise,3),")")
+p_text <- paste("P =", round(p_value_mean_noise,3),"")
 
 
 legend("topright", 
-       legend = c(site_df$Name, p_text),
+       legend = c(short_names[names(site_colors)], p_text),
        col = c(site_df$colors, "black"), 
        pch = c(site_df$shapes, NA),
        lty = c(rep(NA, length(site_df$Name)), NA), 
@@ -682,12 +697,14 @@ Stacked_Bar <- barplot(
   beside = FALSE,
   col = my_colors,
   legend = rownames(mytable),
+  args.legend = list(x = "topleft", cex = 1.3),
   names.arg = colnames(mytable),
   xlab = "Name",
   ylab = "Predation",
-  main = "Clay Caterpillar Predation",
-  ylim = c(0, 100)
-)
+  ylim = c(0, 100),
+  cex.axis = 1.3,
+  cex.lab =1.3,
+  cex = 1.3)
 
 totals <- colSums(mytable)
 text(Stacked_Bar, totals, labels = totals, pos = 3)
@@ -700,7 +717,7 @@ for (j in seq_len(ncol(mytable))) {
   for (i in seq_len(nrow(mytable))) {
     countValue <- mytable[i, j]
     if (countValue > 0) {
-      text(Stacked_Bar[j], stackMidpoints[i, j], labels = countValue, cex=0.8)
+      text(Stacked_Bar[j], stackMidpoints[i, j], labels = countValue, cex=1)
     }
   }
 }

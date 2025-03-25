@@ -29,23 +29,28 @@ sites <- data.frame(
 
 sites_sf <- st_as_sf(sites, coords = c("longitude", "latitude"), crs = 4326)
 
+bbox <- st_bbox(c(xmin = -80, xmax = -78.65, ymin = 35.3, ymax = 36.7), crs = 4326)
+bbox_poly <- st_as_sfc(bbox)
+
+
+
+
 ggmap(map) +
-  geom_bin2d(data = periodical.cicada.data, aes(x = longitude, y = latitude), bins = 80, alpha = 0.6) +
-  scale_fill_gradientn(colors = c("yellow", "orange", "red"), name = "Cicada Density") +
-  geom_point(data = sites, aes(x = longitude, y = latitude), color = "black", size = 1) + 
-  geom_label_repel(data = sites, aes(x = longitude, y = latitude, label = site_name), 
-                  color = "darkblue", size = 5, box.padding = 1.7) +
-  labs(x = "Longitude", y = "Latitude", cex = 1.3) +
-  theme_minimal() +
-  theme(
-    axis.title = element_text(size = 14, face = "bold"),
-    axis.text = element_text(size = 12),
-    legend.position = "right",
-    legend.title = element_text(size = 12, face = "bold"),
-    legend.text = element_text(size = 10),
-    legend.background = element_rect(fill = "white", color = "black"),
-    legend.key = element_rect(fill = "gray90"))
-  
+geom_sf(data = bbox_poly, aes(fill = "Cicada Distribution"), alpha = 0.5, inherit.aes = FALSE) +
+geom_bin2d(data = periodical.cicada.data, aes(x = longitude, y = latitude, fill = "iNaturalist Observations"), bins = 100, alpha = 0.6) +
+geom_point(data = sites, aes(x = longitude, y = latitude), color = "black", size = 3) + 
+geom_label_repel(data = sites, aes(x = longitude, y = latitude, label = site_name), 
+                   color = "black", size = 8, box.padding = 1.7) +
+  labs(x = "Longitude", y = "Latitude", fill = "Legend") +
+theme(
+    axis.title = element_text(size = 20),
+    axis.text = element_text(size = 15),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 0),
+    legend.text = element_text(size = 15)) +
+  scale_fill_manual(values = c("Cicada Distribution" = "maroon2", "iNaturalist Observations" = "yellow"))
+
+
 
 
 
@@ -55,10 +60,10 @@ EnoRiver <- filter(fullDataset, Name == "Eno River State Park", Year == 2024) %>
 
 EnoRiver_sf <- st_as_sf(EnoRiver, coords = c("Longitude","Latitude"))
 
-ERSP.area <- c(left = min(EnoRiver$Longitude, na.rm = TRUE) -.01,
-          bottom = min(EnoRiver$Latitude, na.rm = TRUE) -.01,
-          right = max(EnoRiver$Longitude, na.rm = TRUE) +.01,
-          top = max(EnoRiver$Latitude, na.rm = TRUE) +.01)
+ERSP.area <- c(left = min(EnoRiver$Longitude, na.rm = TRUE) -.013,
+          bottom = min(EnoRiver$Latitude, na.rm = TRUE) -.013,
+          right = max(EnoRiver$Longitude, na.rm = TRUE) +.013,
+          top = max(EnoRiver$Latitude, na.rm = TRUE) +.013)
 
 Circles <- data.frame(
   Circle = c("Circle 1", "Circle 2", "Circle 3", "Circle 4", "Circle 5", "Circle 6", "Circle 7", "Circle 8"),
@@ -66,15 +71,15 @@ Circles <- data.frame(
   longitude = c(-79.0076410258, -79.0070628588, -79.0073105049, -79.0081902695, -79.0085027469, -79.0089654279, -79.0083854581, -79.0073614669))
 
 
-Eno.map <- get_stadiamap(ERSP.area, zoom = 18, maptype = "stamen_terrain")
+Eno.map <- get_stadiamap(ERSP.area, zoom = 16, maptype = "stamen_terrain")
 
 ggmap(Eno.map) +
-  geom_point(data = Circles, aes(x = longitude, y = latitude), color = "black", pch = 1, size = 4) +
+  geom_point(data = Circles, aes(x = longitude, y = latitude), color = "black", pch = 19, size = 4, face = "bold") +
   geom_label_repel(data = Circles, aes(x = longitude, y = latitude, label = Circle), 
-                   color = "darkblue", size = 5, box.padding = 1.7) +
+                   color = "black", size = 7, box.padding = 1.1) +
   labs(x = "Longitude", y = "Latitude") +
   theme_minimal() +
   theme(
-axis.title = element_text(size = 14, face = "bold"),
-axis.text = element_text(size = 12))
+axis.title = element_text(size = 20, face = "bold"),
+axis.text = element_text(size = 15))
 

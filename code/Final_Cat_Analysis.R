@@ -499,14 +499,6 @@ for (site in unique(cicada_analysis_nocicada$site)) {
 
 text(2.3, 0.19, "p = 0.013", cex = 1.7, adj = 1)
 
-short_names <- c(
-  "UNC Chapel Hill Campus" = "UNC Campus",
-  "NC Botanical Garden" = "NC Botanical Garden",
-  "Eno River State Park" = "Eno River",
-  "Prairie Ridge Ecostation" = "Prairie Ridge",
-  "Triangle Land Conservancy - Johnston Mill Nature Preserve" = "Johnston Mill"
-)
-
 par(mar = c(0, 0, 0, 0))
 plot.new()
 legend("top", 
@@ -518,10 +510,10 @@ legend("top",
 
 
 
-
+# Forest Cover Plot
 layout(matrix(c(1, 2, 3, 3), nrow = 2, ncol = 2, byrow = TRUE), 
        heights = c(4, 1.5))
-# Forest Cover Plot
+
 par(mar = c(6, 6, 5, 2))
 lm_frac_diff <- lm(truefracdiff ~ forest_1km, data = fracdiff)
 summary_stats_Forest <- summary(lm_frac_diff)
@@ -769,6 +761,9 @@ legend("topright",
        cex = 1.7)
 
 
+
+
+
 #Stacked bar graph for the strike marks
 dfsum <- df %>%
   group_by(Name) %>%
@@ -820,4 +815,3 @@ for (j in seq_len(ncol(mytable))) {
     }
   }
 }
-11

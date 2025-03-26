@@ -77,25 +77,25 @@ plot(birdPred$AdjustedDate[birdPred$Name == "Prairie Ridge Ecostation"],
      xlim = c(x_min, x_max),
      xaxt = "n", 
      cex.axis = 1.3, cex.lab = 1.3, type = 'b', 
-     col = '#CC79A7', cex = 1.5, pch = 15, lwd = 2)
+     col = '#CC79A7', cex = 2.5, pch = 15, lwd = 2)
 
-axis.Date(1, at = seq(x_min, x_max, by = "12 days"), format = "%b %d", cex.axis = 1.3)
+axis.Date(1, at = seq(x_min, x_max, by = "12 days"), format = "%b %d", cex.axis = 1.5)
 
 points(birdPred$AdjustedDate[birdPred$Name == "NC Botanical Garden"], 
        birdPred$pctBird[birdPred$Name == "NC Botanical Garden"], 
-       type = 'b', col = '#D55E00', pch = 17, cex = 2, lwd = 2)
+       type = 'b', col = '#D55E00', pch = 17, cex = 2.5, lwd = 2)
 
 points(birdPred$AdjustedDate[birdPred$Name == "Triangle Land Conservancy - Johnston Mill Nature Preserve"], 
        birdPred$pctBird[birdPred$Name == "Triangle Land Conservancy - Johnston Mill Nature Preserve"], 
-       type = 'b', col = 'yellow3', pch = 18, cex = 2, lwd = 2)
+       type = 'b', col = 'yellow3', pch = 18, cex = 2.5, lwd = 2)
 
 points(birdPred$AdjustedDate[birdPred$Name == "Eno River State Park"], 
        birdPred$pctBird[birdPred$Name == "Eno River State Park"], 
-       type = 'b', col = 'black', pch = 8, cex = 2, lwd = 2)
+       type = 'b', col = 'black', pch = 8, cex = 2.5, lwd = 2)
 
 points(birdPred$AdjustedDate[birdPred$Name == "UNC Chapel Hill Campus"], 
        birdPred$pctBird[birdPred$Name == "UNC Chapel Hill Campus"], 
-       type = 'b', col = '#0072B2', pch = 16, cex = 2, lwd = 2)
+       type = 'b', col = '#0072B2', pch = 16, cex = 2.5, lwd = 2)
 
 legend("topright", legend = c("Prairie Ridge Ecostation", 
                               "NC Botanical Garden",

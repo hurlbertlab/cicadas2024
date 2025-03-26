@@ -11,7 +11,19 @@ library(stringr)
 #---------
 #load in snake data
 snakes <- read.csv("copperheads/data/snakes/inat-snakes.csv") %>%
-  mutate(year = substr(observed_on, start = 1, stop = 4)) #add in year information
+  #add in year information
+  mutate(year = substr(observed_on, start = 1, stop = 4)) 
+
+snakes_trim <- snakes %>%
+  #round lat/lon for removing duplicates
+  mutate(latround = round(latitude, digits = 3),
+         lonround = round(longitude, digits = 3)) %>%
+  #remove duplicate observations
+  group_by(observed_on, latround, lonround, scientific_name) %>%
+  #some way of summarizing how many duplicates there are before we group
+  summarize(n = n()) %>%
+  filter(n > 1)
+  
 
 #load in copperheads
 copperheads <- read.csv("copperheads/data/snakes/inat-copperheads.csv")

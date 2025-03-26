@@ -32,3 +32,12 @@ of the eastern copperhead.
 - run a superimposed epoch analysis - see oak tree paper for citations that reference it's use and how to run it
 - graph and check out results
 - ?? paper?
+
+
+-Notes 2025.03.26
+Thoughts on copperheads:
+-Still need to filter for unique observations where two ppl record the same snake
+-County isn't really a unit that matters..so nor does perc county
+- the unit that matters is the brood! that's a boundary that's biologically meaningful, and a place you can ask about % copperhead vs % snakes in cicada and non-cicada years
+- should do this in a bayesian framework where my predictor is the % of observations in a brood year that are copperheads, fit a different intercept for every brood (they come from different areas with dif expectations about background copperheads), and ask if there's a different effect if cicada yr is 1 (present) or cicada yr is 0. (not present). 
+- let's not worry about things like "is there an effect in the next yr" this would be like, from a copperhead population increase in the year following cicadas. That's an interesting question but a secondary one, and the first question is one that's easier to answer, so let's do that first. this second model would be like. Just add another slope for cicada year. Have 3 options instead of binary. 

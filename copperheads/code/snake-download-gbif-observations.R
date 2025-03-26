@@ -8,7 +8,7 @@ library(readr)
 #download the gbif file from:
 #GBIF.org (08 October 2024) GBIF Occurrence Download  https://doi.org/10.15468/dl.mvpbd7
 
-gbif_filepath = "copperheads/data/snakes/gbif-download-inat-squamata.csv"
+#gbif_filepath = "copperheads/data/snakes/gbif-download-inat-squamata.csv"
 
 #read in gbif download of all inat research-grade squamata observations within
 #a custom US boundary

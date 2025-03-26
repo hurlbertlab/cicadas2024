@@ -76,7 +76,7 @@ plot(birdPred$AdjustedDate[birdPred$Name == "Prairie Ridge Ecostation"],
      xlab = "Date", ylab = "% Bird Strikes", ylim = c(0, 60), 
      xlim = c(x_min, x_max),
      xaxt = "n", 
-     cex.axis = 1.3, cex.lab = 1.3, type = 'b', 
+     cex.axis = 1.5, cex.lab = 1.5, type = 'b', 
      col = '#CC79A7', cex = 2.5, pch = 15, lwd = 2)
 
 axis.Date(1, at = seq(x_min, x_max, by = "12 days"), format = "%b %d", cex.axis = 1.5)

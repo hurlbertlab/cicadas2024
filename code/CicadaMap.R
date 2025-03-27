@@ -29,26 +29,30 @@ sites <- data.frame(
 
 sites_sf <- st_as_sf(sites, coords = c("longitude", "latitude"), crs = 4326)
 
-bbox <- st_bbox(c(xmin = -80, xmax = -78.65, ymin = 35.3, ymax = 36.7), crs = 4326)
-bbox_poly <- st_as_sfc(bbox)
 
 
 
+slope <- (36.7 - 35.3) / (-78.2 - (-78.9))
+intercept <- 35.3 - slope * (-78.9)
 
 ggmap(map) +
-geom_sf(data = bbox_poly, aes(fill = "Cicada Distribution"), alpha = 0.5, inherit.aes = FALSE) +
-geom_bin2d(data = periodical.cicada.data, aes(x = longitude, y = latitude, fill = "iNaturalist Observations"), bins = 100, alpha = 0.6) +
-geom_point(data = sites, aes(x = longitude, y = latitude), color = "black", size = 3) + 
-geom_label_repel(data = sites, aes(x = longitude, y = latitude, label = site_name), 
+  geom_abline(slope = slope, intercept = intercept, color = "maroon2", alpha = 0.3, linewidth = 5) +
+  geom_bin2d(data = periodical.cicada.data, aes(x = longitude, y = latitude, fill = "iNaturalist Observations"), bins = 100, alpha = 0.6) +
+  geom_point(data = sites, aes(x = longitude, y = latitude), color = "black", size = 3) + 
+  geom_label_repel(data = sites, aes(x = longitude, y = latitude, label = site_name), 
                    color = "black", size = 8, box.padding = 1.7) +
   labs(x = "Longitude", y = "Latitude", fill = "Legend") +
-theme(
+  theme(
     axis.title = element_text(size = 20),
     axis.text = element_text(size = 15),
     legend.position = "bottom", 
     legend.title = element_text(size = 0),
-    legend.text = element_text(size = 15)) +
-  scale_fill_manual(values = c("Cicada Distribution" = "maroon2", "iNaturalist Observations" = "yellow"))
+    legend.text = element_text(size = 15)
+  ) +
+  scale_fill_manual(values = c("iNaturalist Observations" = "yellow"))
+
+
+
 
 
 

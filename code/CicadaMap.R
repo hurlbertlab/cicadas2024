@@ -30,13 +30,7 @@ sites <- data.frame(
 sites_sf <- st_as_sf(sites, coords = c("longitude", "latitude"), crs = 4326)
 
 
-
-
-slope <- (36.7 - 35.3) / (-78.2 - (-78.9))
-intercept <- 35.3 - slope * (-78.9)
-
 ggmap(map) +
-  geom_abline(slope = slope, intercept = intercept, color = "maroon2", alpha = 0.3, linewidth = 5) +
   geom_bin2d(data = periodical.cicada.data, aes(x = longitude, y = latitude, fill = "iNaturalist Observations"), bins = 100, alpha = 0.6) +
   geom_point(data = sites, aes(x = longitude, y = latitude), color = "black", size = 3) + 
   geom_label_repel(data = sites, aes(x = longitude, y = latitude, label = site_name), 

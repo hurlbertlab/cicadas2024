@@ -23,14 +23,6 @@ NoisePredation <- read_excel("data/NoisePredation.xlsx")
 # Cleaning up dates in WeeklyCicadaNoise
 #WeeklyCicadaNoise$jd[WeeklyCicadaNoise$site == 'eno' & weeklyCicadaNoise$jd == 137] = 129
 
-short_names <- c(
-  "UNC Chapel Hill Campus" = "UNC Campus",
-  "NC Botanical Garden" = "NC Botanical Garden",
-  "Eno River State Park" = "Eno River",
-  "Prairie Ridge Ecostation" = "Prairie Ridge",
-  "Triangle Land Conservancy - Johnston Mill Nature Preserve" = "Johnston Mill"
-)
-
 # Function for substituting values based on a condition using dplyr:mutate
 mutate_cond <- function(.data, condition, ..., envir = parent.frame()) {
   condition <- eval(substitute(condition), .data, envir)
@@ -205,6 +197,38 @@ fracdiff <- fracdataframe %>%
   mutate(truefracdiff = truefrac[year_2024 == 1] - truefrac[year_2024 == 0]) %>%
   distinct(site, truefracdiff, forest_1km, calculated_mean_noise)
 
+fracdiff <- fracdiff %>%
+  mutate(
+    truefracdiff = truefracdiff * 100,
+    forest_1km = forest_1km * 100)
+
+#make dataframe with the plotting parameters.
+site_colors <- c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3")
+site_shapes <- c(16, 17, 8, 15, 18)
+names(site_colors) <- unique(fracdiff$site)
+names(site_shapes) <- unique(fracdiff$site)
+plot_params <- data.frame(site_colors, site_shapes) %>%
+  mutate(site = rownames(.))
+fracdiff <- left_join(fracdiff, plot_params, by = "site") %>%
+  mutate(Name = case_when(
+    site ==  "Eno River State Park" ~ "Eno River",
+    site ==  "Triangle Land Conservancy - Johnston Mill Nature Preserve" ~ "Johnston Mill",
+    site ==  "NC Botanical Garden" ~ "NCBG",
+    site ==  "UNC Chapel Hill Campus" ~ "UNC Campus",
+    site ==  "Prairie Ridge Ecostation" ~ "Prairie Ridge"
+  ))
+
+
+site_shapes <- c(
+  "UNC Chapel Hill Campus" = 16,
+  "NC Botanical Garden" = 17,
+  "Eno River State Park" = 8,
+  "Prairie Ridge Ecostation" = 15,
+  "Triangle Land Conservancy - Johnston Mill Nature Preserve" = 18  
+)
+
+
+
 
 # Statistical analysis at the branch level using glm
 # Need "raw" data at the survey level for our subset of sites
@@ -258,11 +282,6 @@ glm_results_post <- tidy(post.cicada) %>%
 
 write.csv(glm_results_post, "glm_results_post.csv", row.names = FALSE)
 
-fracdiff <- fracdiff %>%
-  mutate(
-    truefracdiff = truefracdiff * 100,
-    forest_1km = forest_1km * 100)
-
 #Dataset and filter for Clay Cat Predation and weekly cicada noise
 url = "https://docs.google.com/spreadsheets/d/1hi7iyi7xunriU2fvFpgNVDjO5ERML4IUgzTkQjLVYCo/edit?gid=0#gid=0"
 df = gsheet2tbl(url) %>%
@@ -313,42 +332,29 @@ final_data_2nd_Deployment = WeeklyCicadaNoise %>%
 
 
 #All deployment data showing effect of each site for bird strikes and Cicada Volume Index
-NoisePredation = NoisePredation %>%
+NoisePredation <- NoisePredation %>%
   left_join(ForestCover %>% select(Name, forest_1km)) %>%
-  group_by(Name) %>%
   mutate(Name = case_when(
     Name == "Eno River State Park" ~ "ERSP",
     Name == "Triangle Land Conservancy - Johnston Mill Nature Preserve" ~ "JM",
     Name == "NC Botanical Garden" ~ "NCBG",
     Name == "Prairie Ridge Ecostation" ~ "PRE",
     Name == "UNC Chapel Hill Campus" ~ "UNC",
-    TRUE ~ NA  # For any unmatched values, assign NA
+    TRUE ~ Name  # Keep the original name if no match
   ))
 
 #lm models //////////
 lm_forest_frac_diff <- lm(truefracdiff ~ forest_1km, data = fracdiff)
-summary(lm_forest_frac_diff)
+summary_stats_Forest <- summary(lm_forest_frac_diff)
 
 lm_noise_frac_diff <- lm(truefracdiff ~ calculated_mean_noise, data = fracdiff)
-summary(lm_noise_frac_diff)
+summary_stats <- summary(lm_noise_frac_diff)
 
 Mean_Noise_additive <- lm(pctBird ~ mean_noise + Name, data = NoisePredation)
-summary(Mean_Noise_additive)
+summary_stats_additive <- summary(Mean_Noise_additive)
 
 Mean_Noise_interaction <- lm(pctBird ~ mean_noise + Name + mean_noise*Name, data = NoisePredation)
 summary(Mean_Noise_interaction)
-
-#final_data_1st_Deployment_Forest <- lm(pctBird ~ forest_1km, data = final_data_1st_Deployment)
-#summary(final_data_1st_Deployment_Forest)
-
-#final_data_1st_Deployment_Noise <- lm(pctBird ~ mean_noise, data = final_data_1st_Deployment)
-#summary(final_data_1st_Deployment_Forest)
-
-#final_data_2nd_Deployment_Forest <- lm(pctBird ~ forest_1km, data = final_data_2nd_Deployment)
-#summary(final_data_2nd_Deployment_Forest)
-
-#final_data_2nd_Deployment_Noise <- lm(pctBird ~ mean_noise, data = final_data_2nd_Deployment)
-#summary(final_data_2nd_Deployment_Forest)
 
 
 ###############data plotted
@@ -370,11 +376,11 @@ cicada_analysis <- fracdataframe %>%
   ungroup()
 
 site_colors <- c(
-  "UNC Chapel Hill Campus" = "#0072B2",
+  "UNC Chapel Hill Campus" = "yellow3",
   "NC Botanical Garden" = "#D55E00",
-  "Eno River State Park" = "black",
-  "Prairie Ridge Ecostation" = "#CC79A7",
-  "Triangle Land Conservancy - Johnston Mill Nature Preserve" = "grey45"
+  "Eno River State Park" = "#0072B2",
+  "Prairie Ridge Ecostation" = "black",
+  "Triangle Land Conservancy - Johnston Mill Nature Preserve" = "#CC79A7"
 )
 plot(0, 0, 
      xlim = c(0.5, 2.5), 
@@ -441,11 +447,11 @@ cicada_analysis_nocicada <- fracdataframe %>%
   ungroup()
 
 site_colors <- c(
-  "UNC Chapel Hill Campus" = "#0072B2",
+  "UNC Chapel Hill Campus" = "yellow3",
   "NC Botanical Garden" = "#D55E00",
-  "Eno River State Park" = "black",
-  "Prairie Ridge Ecostation" = "#CC79A7",
-  "Triangle Land Conservancy - Johnston Mill Nature Preserve" = "grey45"
+  "Eno River State Park" = "#0072B2",
+  "Prairie Ridge Ecostation" = "black",
+  "Triangle Land Conservancy - Johnston Mill Nature Preserve" = "#CC79A7"
 )
 plot(0, 0, 
      xlim = c(0.5, 2.5), 
@@ -510,84 +516,75 @@ legend("top",
 
 
 
-# Forest Cover Plot
+
+
+
+
+#Putting Cicada volume and Forest Cover on the same matrix
 layout(matrix(c(1, 2, 3, 3), nrow = 2, ncol = 2, byrow = TRUE), 
        heights = c(4, 1.5))
 
-par(mar = c(6, 6, 5, 2))
-lm_frac_diff <- lm(truefracdiff ~ forest_1km, data = fracdiff)
-summary_stats_Forest <- summary(lm_frac_diff)
-p_value_Forest <- summary_stats_Forest$coefficients["forest_1km", 4]
-p_Forest_Text <- paste("P =", round(p_value_Forest,3),"")
-
-site_colors <- c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3")
-site_shapes <- c(16, 17, 8, 15, 18)  
-names(site_colors) <- unique(fracdiff$site)
-names(site_shapes) <- unique(fracdiff$site)
-
-plot(fracdiff$forest_1km, fracdiff$truefracdiff,
-     type = "n",  
-     xlab = "% Forest Cover", 
-     ylab = "Difference in % of Surveys with Caterpillars",
-     xlim = range(fracdiff$forest_1km, na.rm = TRUE),
-     ylim = range(fracdiff$truefracdiff, na.rm = TRUE),
-     cex.axis = 1.7,
-     cex.lab = 1.7)
-
-for (site in unique(fracdiff$site)) {
-  points(fracdiff$forest_1km[fracdiff$site == site], 
-         fracdiff$truefracdiff[fracdiff$site == site],
-         col = site_colors[site],
-         pch = site_shapes[site],
-         cex = 3)
-}
-abline(lm_frac_diff, col = "black", lwd = 3)
-
-
-x_forest <- par("usr")[1] + 0.27 * (par("usr")[2] - par("usr")[1])
-y_forest <- par("usr")[4] - 0.05 * (par("usr")[4] - par("usr")[3])
-text(x_forest, y_forest, p_Forest_Text, cex = 1.7, adj = 1)
 
 # Cicada Volume Plot
 par(mar = c(6, 6, 5, 2))
-lm_Vol_diff <- lm(truefracdiff ~ calculated_mean_noise, data = fracdiff)
-summary_stats <- summary(lm_Vol_diff)
 p_value_Vol_diff <- summary_stats$coefficients["calculated_mean_noise", 4]
 p_Vol_Text <- paste("P =", round(p_value_Vol_diff,3),"")
 
-plot(fracdiff$calculated_mean_noise, fracdiff$truefracdiff, 
-     type = "n",  
+plot(fracdiff$calculated_mean_noise, 
+     fracdiff$truefracdiff,
      xlab = "Cicada Index", 
      ylab = "Difference in % of Surveys with Caterpillars",
      xlim = range(fracdiff$calculated_mean_noise, na.rm = TRUE),
      ylim = range(fracdiff$truefracdiff , na.rm = TRUE),
      cex.axis = 1.7,
-     cex.lab = 1.7)
+     cex.lab = 1.7,
+     col = fracdiff$site_colors,
+     pch = fracdiff$site_shapes,
+     cex = 3)
+abline(lm_noise_frac_diff, col = "black", lwd = 3)
 
-for (site in unique(fracdiff$site)) {
-  points(fracdiff$calculated_mean_noise[fracdiff$site == site], 
-         fracdiff$truefracdiff[fracdiff$site == site],
-         col = site_colors[site],
-         pch = site_shapes[site],
-         cex = 3)
-}
-abline(lm_Vol_diff, col = "black", lwd = 3)
-
-# Dynamic text positioning
 x_vol <- par("usr")[1] + 0.05 * (par("usr")[2] - par("usr")[1])
 y_vol <- par("usr")[4] - 0.05 * (par("usr")[4] - par("usr")[3])
 text(x_vol, y_vol, p_Vol_Text, cex = 1.7, adj = 0)
 
+
+#Forest Cover Plot
+par(mar = c(6, 6, 5, 2))
+p_value_Forest <- summary_stats_Forest$coefficients["forest_1km", 4]
+p_Forest_Text <- paste("P =", round(p_value_Forest,3),"")
+
+plot(fracdiff$forest_1km, fracdiff$truefracdiff,
+     xlab = "% Forest Cover", 
+     ylab = "Difference in % of Surveys with Caterpillars",
+     xlim = range(fracdiff$forest_1km, na.rm = TRUE),
+     ylim = range(fracdiff$truefracdiff, na.rm = TRUE),
+     cex.axis = 1.7,
+     cex.lab = 1.7,
+     col = fracdiff$site_colors,
+     pch = fracdiff$site_shapes,
+     cex = 3)
+abline(lm_forest_frac_diff, col = "black", lwd = 3)
+
+x_forest <- par("usr")[1] + 0.27 * (par("usr")[2] - par("usr")[1])
+y_forest <- par("usr")[4] - 0.05 * (par("usr")[4] - par("usr")[3])
+text(x_forest, y_forest, p_Forest_Text, cex = 1.7, adj = 1)
+
 # Legend
-par(mar = c(0, 0, 0, 0))
+par(mar = c(2, 1, 1, 1))
 plot.new()
-legend("top", 
-       legend = short_names, 
-       col = site_colors, 
+legend("center", fracdiff$Name,
+       col = fracdiff$site_colors, 
        lwd = 2, 
-       pch = site_shapes, 
+       pch = fracdiff$site_shapes, 
        cex = 1.5,
-       horiz = TRUE)
+       horiz = TRUE) 
+
+
+
+
+
+
+
 
 
 
@@ -602,7 +599,6 @@ slope <- coef_full["mean_noise"]
 site_df = data.frame(Name = unique(NoisePredation$Name),
                      colors = c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3"),
                      shapes = c(16, 17, 8, 15, 18))
-
 NoisePredation2 = left_join(NoisePredation, site_df, by = 'Name')
 
 par(mar = c(6, 6, 4, 2))
@@ -672,14 +668,7 @@ legend("topright",
 
 
 
-
-
-
-
-
 #####This is the segments
-Mean_Noise_additive <- lm(pctBird ~ mean_noise + Name, data = NoisePredation)
-summary_stats_volume <- summary(Mean_Noise_additive)
 coef_full <- coef(Mean_Noise_additive)
 intercept <- coef_full[1]
 slope <- coef_full["mean_noise"]
@@ -753,7 +742,7 @@ summary_model <- summary(Mean_Noise_additive)
 p_value_mean_noise <- summary_model$coefficients[2, 4]
 p_text <- paste("P =", round(p_value_mean_noise, 3), "")
 legend("topright", 
-       legend = c(short_names[names(site_colors)], p_text),
+       legend = c(site_df$Name, p_text),
        col = c(site_df$colors, "black"), 
        pch = c(site_df$shapes, NA),
        lty = c(rep(NA, length(site_df$Name)), NA), 

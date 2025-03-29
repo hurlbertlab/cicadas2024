@@ -516,8 +516,8 @@ plot(fracdiff$calculated_mean_noise,
      ylab = "Difference in % of Surveys with Caterpillars",
      xlim = range(fracdiff$calculated_mean_noise, na.rm = TRUE),
      ylim = range(fracdiff$truefracdiff , na.rm = TRUE),
-     cex.axis = 1.7,
-     cex.lab = 1.7,
+     cex.axis = 2,
+     cex.lab = 2,
      col = fracdiff$site_colors,
      pch = fracdiff$site_shapes,
      cex = 3)
@@ -525,7 +525,7 @@ abline(lm_noise_frac_diff, col = "black", lwd = 3)
 
 x_vol <- par("usr")[1] + 0.05 * (par("usr")[2] - par("usr")[1])
 y_vol <- par("usr")[4] - 0.05 * (par("usr")[4] - par("usr")[3])
-text(x_vol, y_vol, p_Vol_Text, cex = 1.7, adj = 0)
+text(x_vol, y_vol, p_Vol_Text, cex = 2, adj = 0)
 
 
 #Forest Cover Plot
@@ -538,8 +538,8 @@ plot(fracdiff$forest_1km, fracdiff$truefracdiff,
      ylab = "Difference in % of Surveys with Caterpillars",
      xlim = range(fracdiff$forest_1km, na.rm = TRUE),
      ylim = range(fracdiff$truefracdiff, na.rm = TRUE),
-     cex.axis = 1.7,
-     cex.lab = 1.7,
+     cex.axis = 2,
+     cex.lab = 2,
      col = fracdiff$site_colors,
      pch = fracdiff$site_shapes,
      cex = 3)
@@ -547,7 +547,7 @@ abline(lm_forest_frac_diff, col = "black", lwd = 3)
 
 x_forest <- par("usr")[1] + 0.27 * (par("usr")[2] - par("usr")[1])
 y_forest <- par("usr")[4] - 0.05 * (par("usr")[4] - par("usr")[3])
-text(x_forest, y_forest, p_Forest_Text, cex = 1.7, adj = 1)
+text(x_forest, y_forest, p_Forest_Text, cex = 2, adj = 1)
 
 # Legend
 par(mar = c(2, 1, 1, 1))
@@ -556,7 +556,7 @@ legend("center", fracdiff$Name,
        col = fracdiff$site_colors, 
        lwd = 2, 
        pch = fracdiff$site_shapes, 
-       cex = 1.5,
+       cex = 2,
        horiz = TRUE) 
 
 

@@ -47,7 +47,7 @@ points(birdPred$AdjustedDate[birdPred$Name == "NC Botanical Garden"],
 
 points(birdPred$AdjustedDate[birdPred$Name == "Triangle Land Conservancy - Johnston Mill Nature Preserve"], 
        birdPred$pctBird[birdPred$Name == "Triangle Land Conservancy - Johnston Mill Nature Preserve"], 
-       type = 'b', col = '#CC79A7', pch = 18, cex = 2.7, lwd = 2)
+       type = 'b', col = '#CC79A7', pch = 15, cex = 2.7, lwd = 2)
 
 points(birdPred$AdjustedDate[birdPred$Name == "Eno River State Park"], 
        birdPred$pctBird[birdPred$Name == "Eno River State Park"], 
@@ -55,16 +55,16 @@ points(birdPred$AdjustedDate[birdPred$Name == "Eno River State Park"],
 
 points(birdPred$AdjustedDate[birdPred$Name == "UNC Chapel Hill Campus"], 
        birdPred$pctBird[birdPred$Name == "UNC Chapel Hill Campus"], 
-       type = 'b', col = 'yellow3', pch = 15, cex = 2.7, lwd = 2)
+       type = 'b', col = 'yellow3', pch = 18, cex = 2.7, lwd = 2)
 
-legend("topright", legend = c("Prairie Ridge Ecostation", 
-                              "NC Botanical Garden",
-                              "Eno River State Park",
-                              "UNC Chapel Hill Campus",
+legend("topright", legend = c("Prairie Ridge", 
+                              "NCBG",
+                              "Eno River",
+                              "UNC Campus",
                               "Johnston Mill",
-                              "Shaded = Cicadas Present"),
+                              "Shaded = Cicadas"),
        col = c("black", "#D55E00", "#0072B2", "yellow3", "#CC79A7", NA),
-       pch = c(8, 17, 16, 15, 18, NA),
+       pch = c(8, 17, 16, 18, 15, NA),
        lwd = 2,
        cex = 1.7)
 

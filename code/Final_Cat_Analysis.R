@@ -218,18 +218,6 @@ fracdiff <- left_join(fracdiff, plot_params, by = "site") %>%
     site ==  "Prairie Ridge Ecostation" ~ "Prairie Ridge"
   ))
 
-
-site_shapes <- c(
-  "UNC Chapel Hill Campus" = 16,
-  "NC Botanical Garden" = 17,
-  "Eno River State Park" = 8,
-  "Prairie Ridge Ecostation" = 15,
-  "Triangle Land Conservancy - Johnston Mill Nature Preserve" = 18  
-)
-
-
-
-
 # Statistical analysis at the branch level using glm
 # Need "raw" data at the survey level for our subset of sites
 
@@ -335,12 +323,19 @@ final_data_2nd_Deployment = WeeklyCicadaNoise %>%
 NoisePredation <- NoisePredation %>%
   left_join(ForestCover %>% select(Name, forest_1km)) %>%
   mutate(Name = case_when(
-    Name == "Eno River State Park" ~ "ERSP",
-    Name == "Triangle Land Conservancy - Johnston Mill Nature Preserve" ~ "JM",
+    Name == "Eno River State Park" ~ "Eno River",
+    Name == "Triangle Land Conservancy - Johnston Mill Nature Preserve" ~ "Johnston Mill",
     Name == "NC Botanical Garden" ~ "NCBG",
-    Name == "Prairie Ridge Ecostation" ~ "PRE",
-    Name == "UNC Chapel Hill Campus" ~ "UNC",
+    Name == "Prairie Ridge Ecostation" ~ "Prairie Ridge",
+    Name == "UNC Chapel Hill Campus" ~ "UNC Campus",
     TRUE ~ Name  # Keep the original name if no match
+  )) %>%
+  mutate(site = case_when( Name == "Eno River" ~ "ERSP",
+                           Name == "Johnston Mill" ~ "JM",
+                           Name == "NCBG" ~ "NCBG",
+                           Name == "Prairie Ridge" ~ "PRE",
+                           Name == "UNC Campus" ~ "UNC",
+                           TRUE ~ Name 
   ))
 
 #lm models //////////
@@ -375,13 +370,7 @@ cicada_analysis <- fracdataframe %>%
   ) %>%
   ungroup()
 
-site_colors <- c(
-  "UNC Chapel Hill Campus" = "yellow3",
-  "NC Botanical Garden" = "#D55E00",
-  "Eno River State Park" = "#0072B2",
-  "Prairie Ridge Ecostation" = "black",
-  "Triangle Land Conservancy - Johnston Mill Nature Preserve" = "#CC79A7"
-)
+
 plot(0, 0, 
      xlim = c(0.5, 2.5), 
      ylim = c(-0.005, 0.20),
@@ -389,6 +378,7 @@ plot(0, 0,
      las = 1,
      lwd = 3, 
      cex = 3,
+     col = fracdiff$site_colors,
      type = "n",
      xaxt = "n",
      yaxt = "n", 
@@ -446,13 +436,7 @@ cicada_analysis_nocicada <- fracdataframe %>%
   ) %>%
   ungroup()
 
-site_colors <- c(
-  "UNC Chapel Hill Campus" = "yellow3",
-  "NC Botanical Garden" = "#D55E00",
-  "Eno River State Park" = "#0072B2",
-  "Prairie Ridge Ecostation" = "black",
-  "Triangle Land Conservancy - Johnston Mill Nature Preserve" = "#CC79A7"
-)
+
 plot(0, 0, 
      xlim = c(0.5, 2.5), 
      ylim = c(-0.005, 0.20),
@@ -460,6 +444,7 @@ plot(0, 0,
      las = 1,
      lwd = 3, 
      cex = 3,
+     col = fracdiff$site_colors,
      type = "n",
      xaxt = "n",
      yaxt = "n",
@@ -508,22 +493,17 @@ text(2.3, 0.19, "p = 0.013", cex = 1.7, adj = 1)
 par(mar = c(0, 0, 0, 0))
 plot.new()
 legend("top", 
-       legend = short_names, 
-       col = site_colors, 
+       legend = color_df$Name, 
+       col = color_df$Color, 
        lwd = 2, 
        pch = 16, 
-       cex = 2)
-
-
-
-
-
+       cex = 2,
+       horiz = TRUE)
 
 
 #Putting Cicada volume and Forest Cover on the same matrix
 layout(matrix(c(1, 2, 3, 3), nrow = 2, ncol = 2, byrow = TRUE), 
        heights = c(4, 1.5))
-
 
 # Cicada Volume Plot
 par(mar = c(6, 6, 5, 2))
@@ -668,20 +648,21 @@ legend("topright",
 
 
 
-#####This is the segments
+
+
+
+
+#####This is the segments/////// This kept messing up on me and I dont understand what was going on.
+Mean_Noise_additive <- lm(pctBird ~ mean_noise +Name, data = NoisePredation)
+summary_stats_volume <- summary(Mean_Noise_additive)
 coef_full <- coef(Mean_Noise_additive)
 intercept <- coef_full[1]
 slope <- coef_full["mean_noise"]
 
-site_df = data.frame(Name = unique(NoisePredation$Name),
-                     colors = c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3"),
-                     shapes = c(16, 17, 8, 15, 18))
-NoisePredation2 = left_join(NoisePredation, site_df, by = 'Name')
-
 par(mar = c(6, 6, 4, 2))
-plot(NoisePredation2$mean_noise, NoisePredation2$pctBird,
-     col = NoisePredation2$colors, 
-     pch = NoisePredation2$shapes,
+plot(NoisePredation$mean_noise, NoisePredation$pctBird,
+     col = color_df$Color, 
+     pch = color_df$Symbol,
      xlab = "Cicada Index",
      ylab = "% Bird Predation",
      cex.axis = 2,
@@ -689,53 +670,53 @@ plot(NoisePredation2$mean_noise, NoisePredation2$pctBird,
      cex = 3)
 
 # ERSP (reference site) - row 1 is intercept, row 2 is slope
-site <- "ERSP"
-x1 <- min(NoisePredation2$mean_noise[NoisePredation2$Name == site])
-x2 <- max(NoisePredation2$mean_noise[NoisePredation2$Name == site])
+site <- "Eno River"
+x1 <- min(NoisePredation$mean_noise[NoisePredation$Name == site])
+x2 <- max(NoisePredation$mean_noise[NoisePredation$Name == site])
 y1 <- coef_full[1] + x1 * coef_full[2]  # Just intercept + x1*slope
 y2 <- coef_full[1] + x2 * coef_full[2]  # Just intercept + x2*slope
 segments(x1, y1, x2, y2, 
-         col = NoisePredation2$colors[NoisePredation2$Name == site][1], 
+         col = color_df$Color[NoisePredation$Name == site][1], 
          lwd = 3)
 
 # JM - row 3 is the JM coefficient
-site <- "JM"
-x1 <- min(NoisePredation2$mean_noise[NoisePredation2$Name == site])
-x2 <- max(NoisePredation2$mean_noise[NoisePredation2$Name == site])
+site <- "Johnston Mill"
+x1 <- min(NoisePredation$mean_noise[NoisePredation$Name == site])
+x2 <- max(NoisePredation$mean_noise[NoisePredation$Name == site])
 y1 <- coef_full[1] + coef_full[3] + x1 * coef_full[2]  # Intercept + JM coef + x1*slope
 y2 <- coef_full[1] + coef_full[3] + x2 * coef_full[2]  # Intercept + JM coef + x2*slope
 segments(x1, y1, x2, y2, 
-         col = NoisePredation2$colors[NoisePredation2$Name == site][1], 
+         col = color_df$Color[NoisePredation$Name == site][1], 
          lwd = 3)
 
 # NCBG - row 4 is the NCBG coefficient
 site <- "NCBG"
-x1 <- min(NoisePredation2$mean_noise[NoisePredation2$Name == site])
-x2 <- max(NoisePredation2$mean_noise[NoisePredation2$Name == site])
+x1 <- min(NoisePredation$mean_noise[NoisePredation$Name == site])
+x2 <- max(NoisePredation$mean_noise[NoisePredation$Name == site])
 y1 <- coef_full[1] + coef_full[4] + x1 * coef_full[2]  # Intercept + NCBG coef + x1*slope
 y2 <- coef_full[1] + coef_full[4] + x2 * coef_full[2]  # Intercept + NCBG coef + x2*slope
 segments(x1, y1, x2, y2, 
-         col = NoisePredation2$colors[NoisePredation2$Name == site][1], 
+         col = color_df$Color[NoisePredation$Name == site][1], 
          lwd = 3)
 
 # PRE - row 5 is the PRE coefficient
-site <- "PRE"
-x1 <- min(NoisePredation2$mean_noise[NoisePredation2$Name == site])
-x2 <- max(NoisePredation2$mean_noise[NoisePredation2$Name == site])
+site <- "Prairie Ridge"
+x1 <- min(NoisePredation$mean_noise[NoisePredation$Name == site])
+x2 <- max(NoisePredation$mean_noise[NoisePredation$Name == site])
 y1 <- coef_full[1] + coef_full[5] + x1 * coef_full[2] 
 y2 <- coef_full[1] + coef_full[5] + x2 * coef_full[2]  # Intercept + PRE coef + x2*slope
 segments(x1, y1, x2, y2, 
-         col = NoisePredation2$colors[NoisePredation2$Name == site][1], 
+         col = color_df$Color[NoisePredation$Name == site][1], 
          lwd = 3)
 
 # UNC 
-site <- "UNC"
-x1 <- min(NoisePredation2$mean_noise[NoisePredation2$Name == site])
-x2 <- max(NoisePredation2$mean_noise[NoisePredation2$Name == site])
+site <- "UNC Campus"
+x1 <- min(NoisePredation$mean_noise[NoisePredation$Name == site])
+x2 <- max(NoisePredation$mean_noise[NoisePredation$Name == site])
 y1 <- coef_full[1] + coef_full[6] + x1 * coef_full[2]  # Intercept + UNC coef + x1*slope
 y2 <- coef_full[1] + coef_full[6] + x2 * coef_full[2]  # Intercept + UNC coef + x2*slope
 segments(x1, y1, x2, y2, 
-         col = NoisePredation2$colors[NoisePredation2$Name == site][1], 
+         col = color_df$Color[NoisePredation$Name == site][1], 
          lwd = 3)
 
 summary_model <- summary(Mean_Noise_additive)
@@ -743,8 +724,8 @@ p_value_mean_noise <- summary_model$coefficients[2, 4]
 p_text <- paste("P =", round(p_value_mean_noise, 3), "")
 legend("topright", 
        legend = c(site_df$Name, p_text),
-       col = c(site_df$colors, "black"), 
-       pch = c(site_df$shapes, NA),
+       col = c(color_df$Color, "black"), 
+       pch = c(color_df$Symbol, NA),
        lty = c(rep(NA, length(site_df$Name)), NA), 
        lwd = c(rep(NA, length(site_df$Name)), NA),
        cex = 1.7)

@@ -374,7 +374,7 @@ cicada_analysis <- fracdataframe %>%
 plot(0, 0, 
      xlim = c(0.5, 2.5), 
      ylim = c(-0.005, 0.20),
-     cex.lab =1.7,
+     cex.lab =2,
      las = 1,
      lwd = 3, 
      cex = 3,
@@ -385,10 +385,10 @@ plot(0, 0,
      xlab = "",
      ylab = "% Surveys with Caterpillars")
 axis(1, at = c(1, 2), labels = c("Pre-2024", "2024"), cex.axis = 1.7)
-mtext("May 14 - June 13", side = 1, line = 3, cex = 1.7)
+mtext("May 14 - June 13", side = 1, line = 3, cex = 1.9)
 
 y_ticks <- seq(0, 0.2, by = 0.05) 
-axis(2, at = y_ticks, labels = paste0(y_ticks * 100), cex.axis = 1.5)
+axis(2, at = y_ticks, labels = paste0(y_ticks * 100), cex.axis = 2)
 
 for (site in unique(cicada_analysis$site)) {
   site_data <- cicada_analysis[cicada_analysis$site == site, ]
@@ -402,7 +402,7 @@ for (site in unique(cicada_analysis$site)) {
          site_data$mean_frac, 
          col = site_colors[site],
          pch = 16,
-         cex = 1.7)
+         cex = 2)
   
   segments(c(1, 2), 
            site_data$lower_ci, 
@@ -422,7 +422,7 @@ for (site in unique(cicada_analysis$site)) {
            lwd = 1)
 }
 
-text(2.3, 0.19, "p = 0.019", cex = 1.7, adj = 1)
+text(2.3, 0.19, "p = 0.019", cex = 2, adj = 1)
 
 #########After cicadas plot
 cicada_analysis_nocicada <- fracdataframe %>%
@@ -440,7 +440,7 @@ cicada_analysis_nocicada <- fracdataframe %>%
 plot(0, 0, 
      xlim = c(0.5, 2.5), 
      ylim = c(-0.005, 0.20),
-     cex.lab =1.7,
+     cex.lab =2,
      las = 1,
      lwd = 3, 
      cex = 3,
@@ -451,10 +451,10 @@ plot(0, 0,
      xlab = "",
      ylab = "% Surveys with Caterpillars")
 axis(1, at = c(1, 2), labels = c("Pre-2024", "2024"), cex.axis = 1.7)
-mtext("June 14 - July 31", side = 1, line = 2.5, cex = 1.7)
+mtext("June 14 - July 31", side = 1, line = 3, cex = 1.9)
 
 y_ticks <- seq(0, 0.2, by = 0.05) 
-axis(2, at = y_ticks, labels = paste0(y_ticks * 100), cex.axis = 1.5)
+axis(2, at = y_ticks, labels = paste0(y_ticks * 100), cex.axis = 2)
 
 for (site in unique(cicada_analysis_nocicada$site)) {
   site_data <- cicada_analysis_nocicada[cicada_analysis_nocicada$site == site, ]
@@ -488,7 +488,7 @@ for (site in unique(cicada_analysis_nocicada$site)) {
            lwd = .7)
 }
 
-text(2.3, 0.19, "p = 0.013", cex = 1.7, adj = 1)
+text(2.3, 0.19, "p = 0.013", cex = 2, adj = 1)
 
 par(mar = c(0, 0, 0, 0))
 plot.new()

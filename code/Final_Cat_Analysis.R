@@ -32,7 +32,7 @@ mutate_cond <- function(.data, condition, ..., envir = parent.frame()) {
 # Function for calculating the mode of a series of values
 Mode = function(x){ 
   if (!is.numeric(x)) {
-    stop("values must be numeric for mode calculation")
+    stop
   }
   ta = table(x)
   tam = max(ta)
@@ -40,9 +40,9 @@ Mode = function(x){
   return(max(mod))
 }
 
-meanDensityByWeek = function(surveyData, # merged dataframe of Survey and arthropodSighting tables for a single site
+meanDensityByWeek = function(surveyData, 
                              ordersToInclude = 'All', 
-                             minLength = 0,   # minimum arthropod size to include 
+                             minLength = 0,  
                              jdRange = c(1,365),
                              outlierCount = 10000,
                              plot = FALSE,
@@ -114,7 +114,10 @@ meanDensityByWeek = function(surveyData, # merged dataframe of Survey and arthro
   }
   return(arthCount)
 }
-###########creating a for loop that will help with fracsurveys
+
+
+#creating a for loop that will help with fracsurveys
+
 frac_calculator <- function(
     site = "UNC Chapel Hill Campus", 
     df = fullDataset, 
@@ -218,8 +221,7 @@ fracdiff <- left_join(fracdiff, plot_params, by = "site") %>%
     site ==  "Prairie Ridge Ecostation" ~ "Prairie Ridge"
   ))
 
-# Statistical analysis at the branch level using glm
-# Need "raw" data at the survey level for our subset of sites
+
 
 # For each survey ID, specify whether the survey recorded a caterpillar or not
 rawdata <- fullDataset %>%
@@ -558,14 +560,6 @@ legend("center", fracdiff$Name,
        pch = fracdiff$site_shapes, 
        cex = 2,
        horiz = TRUE) 
-
-
-
-
-
-
-
-
 
 
 #Graph of each site on one plot //////////

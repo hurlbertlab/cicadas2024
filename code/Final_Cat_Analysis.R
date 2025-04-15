@@ -278,8 +278,6 @@ df = gsheet2tbl(url) %>%
   mutate(DeployDate = as.Date(DeployDate, format = "%m/%d/%Y"),
          CollectionDate = as.Date(CollectionDate, format = "%m/%d/%Y"))
 
-
-#First Deployment//////////////
 birdPred = df %>%
   filter('Not_Found' != 1) %>%
   group_by(Name, CollectionDate) %>%
@@ -287,39 +285,6 @@ birdPred = df %>%
             numClayCats = n(),
             pctBird = 100*numBirdStrikes/numClayCats) %>%
   mutate(jd = yday(CollectionDate)) 
-
-final_data_1st_Deployment = WeeklyCicadaNoise %>%
-  filter(jd >= 141 & jd <= 145) %>%
-  mutate(Name = case_when(
-    site == "eno" ~ "Eno River State Park",
-    site == "jmill" ~ "Triangle Land Conservancy - Johnston Mill Nature Preserve",
-    site == "ncbg" ~ "NC Botanical Garden",
-    site == "pridge" ~ "Prairie Ridge Ecostation",
-    site == "unc" ~ "UNC Chapel Hill Campus",
-    TRUE ~ NA_character_  
-  )) %>%
-  left_join(ForestCover, by = 'Name') %>% 
-  select(Name, forest_1km, mean_noise)  %>%
-  left_join(birdPred, by = "Name") %>%
-  filter(jd >= 141 & jd <= 145)
-
-
-#Second deployment of Clay Caterpillars####
-final_data_2nd_Deployment = WeeklyCicadaNoise %>%
-  filter(jd >= 155 & jd <= 159) %>%
-  mutate(Name = case_when(
-    site == "eno" ~ "Eno River State Park",
-    site == "jmill" ~ "Triangle Land Conservancy - Johnston Mill Nature Preserve",
-    site == "ncbg" ~ "NC Botanical Garden",
-    site == "pridge" ~ "Prairie Ridge Ecostation",
-    site == "unc" ~ "UNC Chapel Hill Campus",
-    TRUE ~ NA_character_
-  )) %>%
-  left_join(ForestCover, by = 'Name') %>% 
-  select(Name, forest_1km, mean_noise)  %>%
-  left_join(birdPred, by = "Name") %>%
-  filter(jd >= 155 & jd <= 159)
-
 
 #All deployment data showing effect of each site for bird strikes and Cicada Volume Index
 NoisePredation <- NoisePredation %>%
@@ -560,90 +525,6 @@ legend("center", fracdiff$Name,
        pch = fracdiff$site_shapes, 
        cex = 2,
        horiz = TRUE) 
-
-
-#Graph of each site on one plot //////////
-Mean_Noise_additive <- lm(pctBird ~ mean_noise +Name, data = NoisePredation)
-summary_stats_volume <- summary(Mean_Noise_additive)
-coef_full <- coef(Mean_Noise_additive)
-intercept <- coef_full[1]
-slope <- coef_full["mean_noise"]
-
-
-site_df = data.frame(Name = unique(NoisePredation$Name),
-                     colors = c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3"),
-                     shapes = c(16, 17, 8, 15, 18))
-NoisePredation2 = left_join(NoisePredation, site_df, by = 'Name')
-
-par(mar = c(6, 6, 4, 2))
-plot(NoisePredation2$mean_noise, NoisePredation2$pctBird,
-     col = NoisePredation2$colors, 
-     pch = NoisePredation2$shapes,
-     xlab = "Cicada Volume Index",
-     ylab = "% Bird Predation",
-     cex.axis = 2,
-     cex.lab =2,
-     cex = 3)
-
-
-
-
-#reference line is for Eno
-abline(a = summary(Mean_Noise_additive)$coefficients[1, 1],
-       b = summary(Mean_Noise_additive)$coefficients[2, 1],
-       col = site_df$colors[site_df$Name == 'ERSP'], 
-       lwd = 3)
-
-# Johnston Mill regression line (intercept = "Intercept" + the Johnston Mill estimate)
-abline(a = summary(Mean_Noise_additive)$coefficients[1, 1] +
-         summary(Mean_Noise_additive)$coefficients[3, 1], 
-       b = summary(Mean_Noise_additive)$coefficients[2, 1],
-       col = site_df$colors[site_df$Name == 'JM'], 
-       lwd = 3)
-# NCBG
-abline(a = summary(Mean_Noise_additive)$coefficients[1, 1] +
-         summary(Mean_Noise_additive)$coefficients[4, 1], 
-       b = summary(Mean_Noise_additive)$coefficients[2, 1],
-       col = site_df$colors[site_df$Name == 'NCBG'], 
-       lwd = 3)
-# PRE
-abline(a = summary(Mean_Noise_additive)$coefficients[1, 1] +
-         summary(Mean_Noise_additive)$coefficients[5, 1], 
-       b = summary(Mean_Noise_additive)$coefficients[2, 1],
-       col = site_df$colors[site_df$Name == 'PRE'], 
-       lwd = 3)
-#UNC
-abline(a = summary(Mean_Noise_additive)$coefficients[1, 1] +
-         summary(Mean_Noise_additive)$coefficients[6, 1], 
-       b = summary(Mean_Noise_additive)$coefficients[2, 1],
-       col = site_df$colors[site_df$Name == 'UNC'], 
-       lwd = 3)
-
-for (site in unique(NoisePredation$Name)) {
-  subset_data <- NoisePredation[NoisePredation$Name == site, ]
-  lm_site <- lm(pctBird ~ mean_noise, data = subset_data)
-  abline(lm_site, col = site_colors[site], lwd = 3)
-}
-
-summary_model <- summary(Mean_Noise_additive)
-p_value_mean_noise <- summary_model$coefficients["mean_noise", 4]
-p_text <- paste("P =", round(p_value_mean_noise,3),"")
-
-
-legend("topright", 
-       legend = c(short_names[names(site_colors)], p_text),
-       col = c(site_df$colors, "black"), 
-       pch = c(site_df$shapes, NA),
-       lty = c(rep(NA, length(site_df$Name)), NA), 
-       lwd = c(rep(NA, length(site_df$Name)), NA),
-       cex = 1.7)
-
-
-
-
-
-
-
 
 
 #####This is the segments/////// This kept messing up on me and I dont understand what was going on.

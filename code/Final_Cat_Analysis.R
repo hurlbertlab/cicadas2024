@@ -117,7 +117,6 @@ meanDensityByWeek = function(surveyData,
 
 
 #creating a for loop that will help with fracsurveys
-
 frac_calculator <- function(
     site = "UNC Chapel Hill Campus", 
     df = fullDataset, 
@@ -165,15 +164,16 @@ for (site in site_list) {
     during2024_nocicada
   ) 
   
-  #add these rows to my existing dataframe, outside the for loop
+##add these rows to my existing dataframe, outside the for loop
   fracdataframe <- bind_rows(fracdataframe, new_rows)
   
   
 }
-
+#joining forest cover with the fracdataframe
 fracdataframe <- fracdataframe %>%
   left_join(ForestCover %>% select(Name, forest_1km), by = c("site" = "Name")) 
 
+#mutated Cicada noise to include short names for site
 Cicadanoise <- Cicadanoise %>%
   mutate(Name = case_when(
     site == "eno" ~ "Eno River State Park",
@@ -183,6 +183,7 @@ Cicadanoise <- Cicadanoise %>%
     site == "pridge" ~ "Prairie Ridge Ecostation"
   ))
 
+#Joined fracdataframe with cicadanoise for the calculated mean noise
 fracdataframe <- fracdataframe %>%
   left_join(Cicadanoise %>% select(Name, calculated_mean_noise), by = c("site" = "Name")) %>%
   mutate(Caterpillars_Present = ifelse(truefrac > 0, 1, 0),
@@ -191,6 +192,7 @@ fracdataframe <- fracdataframe %>%
          cicada_present = ifelse(year_2024 & during_cicada, 1, 0))
 fracdataframe$site <- factor(fracdataframe$site)
 
+#created fracdiff to summarize the sum surveys
 fracdiff <- fracdataframe %>%
   group_by(site, year_2024, forest_1km, calculated_mean_noise) %>%
   summarize(SUM_caterpillar_surveys = sum(SUM_caterpillar_surveys),
@@ -199,29 +201,11 @@ fracdiff <- fracdataframe %>%
   group_by(site) %>%
   mutate(truefracdiff = truefrac[year_2024 == 1] - truefrac[year_2024 == 0]) %>%
   distinct(site, truefracdiff, forest_1km, calculated_mean_noise)
-
+#turned truefracdiff into a percentage with forest cover
 fracdiff <- fracdiff %>%
   mutate(
     truefracdiff = truefracdiff * 100,
     forest_1km = forest_1km * 100)
-
-#make dataframe with the plotting parameters.
-site_colors <- c("#0072B2", "#D55E00", "black", "#CC79A7", "yellow3")
-site_shapes <- c(16, 17, 8, 15, 18)
-names(site_colors) <- unique(fracdiff$site)
-names(site_shapes) <- unique(fracdiff$site)
-plot_params <- data.frame(site_colors, site_shapes) %>%
-  mutate(site = rownames(.))
-fracdiff <- left_join(fracdiff, plot_params, by = "site") %>%
-  mutate(Name = case_when(
-    site ==  "Eno River State Park" ~ "Eno River",
-    site ==  "Triangle Land Conservancy - Johnston Mill Nature Preserve" ~ "Johnston Mill",
-    site ==  "NC Botanical Garden" ~ "NCBG",
-    site ==  "UNC Chapel Hill Campus" ~ "UNC Campus",
-    site ==  "Prairie Ridge Ecostation" ~ "Prairie Ridge"
-  ))
-
-
 
 # For each survey ID, specify whether the survey recorded a caterpillar or not
 rawdata <- fullDataset %>%
@@ -241,7 +225,7 @@ rawdata <- fullDataset %>%
   summarize(caterpillar = ifelse(sum(Quantity[Group == 'caterpillar'], na.rm = TRUE) > 0, 1, 0))
 
 
-
+##GLM models for during and after emergence
 dur.cicada <- glm(caterpillar ~ siteFactor + cicadayear + siteFactor*cicadayear, 
                   data = rawdata[rawdata$cicadaperiod ==1, ], family = binomial(link = "cloglog"))
 
@@ -271,6 +255,7 @@ glm_results_post <- tidy(post.cicada) %>%
   as.data.frame()
 
 write.csv(glm_results_post, "glm_results_post.csv", row.names = FALSE)
+
 
 #Dataset and filter for Clay Cat Predation and weekly cicada noise
 url = "https://docs.google.com/spreadsheets/d/1hi7iyi7xunriU2fvFpgNVDjO5ERML4IUgzTkQjLVYCo/edit?gid=0#gid=0"
@@ -303,9 +288,10 @@ NoisePredation <- NoisePredation %>%
                            Name == "Prairie Ridge" ~ "PRE",
                            Name == "UNC Campus" ~ "UNC",
                            TRUE ~ Name 
-  ))
+  )) %>%
+  left_join(color_df %>% select(Name, Color, Symbol), by = "Name")
 
-#lm models //////////
+#lm models for truefracdiff, forest cover, calculated mean noise, and the percent bird strike.
 lm_forest_frac_diff <- lm(truefracdiff ~ forest_1km, data = fracdiff)
 summary_stats_Forest <- summary(lm_forest_frac_diff)
 
@@ -319,13 +305,14 @@ Mean_Noise_interaction <- lm(pctBird ~ mean_noise + Name + mean_noise*Name, data
 summary(Mean_Noise_interaction)
 
 
-###############data plotted
+############### Plots start here
+#2 panel plot for during and after emergence
 layout(matrix(c(1, 2, 3, 3), nrow = 2, ncol = 2, byrow = TRUE), 
        heights = c(4, 1.5))
 par(mar = c(6, 6, 5, 2))
 par(mar = c(6, 6, 5, 2))
 
-#During cicada emergence
+#During cicada emergence graph
 cicada_analysis <- fracdataframe %>%
   filter(during_cicada == 1) %>%
   group_by(site, year_2024) %>%
@@ -391,7 +378,7 @@ for (site in unique(cicada_analysis$site)) {
 
 text(2.3, 0.19, "p = 0.019", cex = 2, adj = 1)
 
-#########After cicadas plot
+#########After cicada emergence graph
 cicada_analysis_nocicada <- fracdataframe %>%
   filter(during_cicada == 0) %>%
   group_by(site, year_2024) %>%
@@ -454,7 +441,7 @@ for (site in unique(cicada_analysis_nocicada$site)) {
            col = site_colors[site],
            lwd = .7)
 }
-
+#legend for during and after cicada emergence
 text(2.3, 0.19, "p = 0.013", cex = 2, adj = 1)
 
 par(mar = c(0, 0, 0, 0))
@@ -519,15 +506,14 @@ text(x_forest, y_forest, p_Forest_Text, cex = 2, adj = 1)
 # Legend
 par(mar = c(2, 1, 1, 1))
 plot.new()
-legend("center", fracdiff$Name,
+legend("center", fracdiff$site,
        col = fracdiff$site_colors, 
        lwd = 2, 
        pch = fracdiff$site_shapes, 
-       cex = 2,
-       horiz = TRUE) 
+       cex = 1.7) 
 
 
-#####This is the segments/////// This kept messing up on me and I dont understand what was going on.
+#####This is the segments/////// 
 Mean_Noise_additive <- lm(pctBird ~ mean_noise +Name, data = NoisePredation)
 summary_stats_volume <- summary(Mean_Noise_additive)
 coef_full <- coef(Mean_Noise_additive)
@@ -536,8 +522,8 @@ slope <- coef_full["mean_noise"]
 
 par(mar = c(6, 6, 4, 2))
 plot(NoisePredation$mean_noise, NoisePredation$pctBird,
-     col = color_df$Color, 
-     pch = color_df$Symbol,
+     col = NoisePredation$Color, 
+     pch = NoisePredation$Symbol,
      xlab = "Cicada Index",
      ylab = "% Bird Predation",
      cex.axis = 2,
@@ -551,7 +537,7 @@ x2 <- max(NoisePredation$mean_noise[NoisePredation$Name == site])
 y1 <- coef_full[1] + x1 * coef_full[2]  # Just intercept + x1*slope
 y2 <- coef_full[1] + x2 * coef_full[2]  # Just intercept + x2*slope
 segments(x1, y1, x2, y2, 
-         col = color_df$Color[NoisePredation$Name == site][1], 
+         col = NoisePredation$Color[NoisePredation$Name == site][1], 
          lwd = 3)
 
 # JM - row 3 is the JM coefficient
@@ -561,7 +547,7 @@ x2 <- max(NoisePredation$mean_noise[NoisePredation$Name == site])
 y1 <- coef_full[1] + coef_full[3] + x1 * coef_full[2]  # Intercept + JM coef + x1*slope
 y2 <- coef_full[1] + coef_full[3] + x2 * coef_full[2]  # Intercept + JM coef + x2*slope
 segments(x1, y1, x2, y2, 
-         col = color_df$Color[NoisePredation$Name == site][1], 
+         col = NoisePredation$Color[NoisePredation$Name == site][1], 
          lwd = 3)
 
 # NCBG - row 4 is the NCBG coefficient
@@ -571,7 +557,7 @@ x2 <- max(NoisePredation$mean_noise[NoisePredation$Name == site])
 y1 <- coef_full[1] + coef_full[4] + x1 * coef_full[2]  # Intercept + NCBG coef + x1*slope
 y2 <- coef_full[1] + coef_full[4] + x2 * coef_full[2]  # Intercept + NCBG coef + x2*slope
 segments(x1, y1, x2, y2, 
-         col = color_df$Color[NoisePredation$Name == site][1], 
+         col = NoisePredation$Color[NoisePredation$Name == site][1], 
          lwd = 3)
 
 # PRE - row 5 is the PRE coefficient
@@ -581,7 +567,7 @@ x2 <- max(NoisePredation$mean_noise[NoisePredation$Name == site])
 y1 <- coef_full[1] + coef_full[5] + x1 * coef_full[2] 
 y2 <- coef_full[1] + coef_full[5] + x2 * coef_full[2]  # Intercept + PRE coef + x2*slope
 segments(x1, y1, x2, y2, 
-         col = color_df$Color[NoisePredation$Name == site][1], 
+         col = NoisePredation$Color[NoisePredation$Name == site][1], 
          lwd = 3)
 
 # UNC 
@@ -591,19 +577,18 @@ x2 <- max(NoisePredation$mean_noise[NoisePredation$Name == site])
 y1 <- coef_full[1] + coef_full[6] + x1 * coef_full[2]  # Intercept + UNC coef + x1*slope
 y2 <- coef_full[1] + coef_full[6] + x2 * coef_full[2]  # Intercept + UNC coef + x2*slope
 segments(x1, y1, x2, y2, 
-         col = color_df$Color[NoisePredation$Name == site][1], 
+         col = NoisePredation$Color[NoisePredation$Name == site][1], 
          lwd = 3)
 
 summary_model <- summary(Mean_Noise_additive)
 p_value_mean_noise <- summary_model$coefficients[2, 4]
 p_text <- paste("P =", round(p_value_mean_noise, 3), "")
 legend("topright", 
-       legend = c(site_df$Name, p_text),
+       legend = c(color_df$Name, p_text),
        col = c(color_df$Color, "black"), 
        pch = c(color_df$Symbol, NA),
-       lty = c(rep(NA, length(site_df$Name)), NA), 
-       lwd = c(rep(NA, length(site_df$Name)), NA),
-       cex = 1.7)
+       cex = 1.7,
+       pt.cex = 2.5)
 
 
 

@@ -12,13 +12,16 @@ df = gsheet2tbl(url) %>%
   mutate(DeployDate = as.Date(DeployDate, format = "%m/%d/%Y"),
          CollectionDate = as.Date(CollectionDate, format = "%m/%d/%Y")) %>%
   mutate(AdjustedDate = DeployDate + 4,
-         cicada_period = ifelse(AdjustedDate >= as.Date("2024-05-14") & AdjustedDate <= as.Date("2024-06-13"), 1, 0)) 
+         cicada_period = ifelse(AdjustedDate >= as.Date("2024-05-14") & AdjustedDate <= as.Date("2024-06-13"), 1, 0)) glm(Bird ~ Name * cicada_period, data = df, family = binomial)
 
-    
+#created a glm to analyze whether cicadas present had an effect on bird predation
 glm_bird_pred <- glm(Bird ~ Name + cicada_period, data = df, family = binomial)
 summary(glm_bird_pred)
 
+interaction_bird_glm <- glm(Bird ~ Name * cicada_period, data = df, family = binomial)
+summary(interaction_bird_glm)
 
+#created birdPred from df to find the percent of bird predation
 birdPred = df %>%
   filter('Not_Found' != 1) %>%
   group_by(Name, DeployDate) %>%
@@ -27,9 +30,12 @@ birdPred = df %>%
             pctBird = 100 * numBirdStrikes / numClayCats) %>%
   mutate(AdjustedDate = DeployDate + 4)
 
+
+#setting the min and max on dates for the bird predation graph
 x_min <- as.Date("2024-05-14")
 x_max <- max(birdPred$AdjustedDate, na.rm = TRUE)
 
+#plotted bird strikes for each site and shaded during cicadas
 par(mar = c(6, 6, 5, 2))
 plot(birdPred$AdjustedDate[birdPred$Name == "Prairie Ridge Ecostation"], 
      birdPred$pctBird[birdPred$Name == "Prairie Ridge Ecostation"], 

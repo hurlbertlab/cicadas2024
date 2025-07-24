@@ -113,6 +113,33 @@ meanDensityByWeek = function(surveyData,
   return(arthCount)
 }
 
+#plot format
+#Sites: Prairie Ridge Ecostation, NC Botanical Garden, UNC Chapel Hill Campus, Triangle Land Conservancy - Johnston Mill Nature Preserve, or Eno River State Park
+##siteyr = filter(fullDataset, Name== Site", Year== 2024)
+##siteorder = meanDensityByWeek(pr24, ordersToInclude = "order", plot = TRUE, plotVar = 'fracSurveys', # 'meanDensity' or 'fracSurveys' or 'meanBiomass'#
+##    new = FALSE, color = 'color', allCats = TRUE)
+
+er24 = filter(fullDataset, Name== "Eno River State Park", Year== 2024)
+jm24 = filter(fullDataset, Name== "Triangle Land Conservancy - Johnston Mill Nature Preserve", Year== 2024)
+pr24 = filter(fullDataset, Name== "Prairie Ridge Ecostation", Year== 2024)
+bg24 = filter(fullDataset, Name== "NC Botanical Garden", Year== 2024)
+unc24 = filter(fullDataset, Name== "UNC Chapel Hill Campus", Year== 2024)
+erCats24 = meanDensityByWeek(er24, ordersToInclude = "caterpillar", plot = TRUE, plotVar = 'fracSurveys',
+                             new = TRUE, color = 'red', allCats = FALSE, ylim = c(0, 20), ylab= "Percent of Surveys with Caterpillars", xlab= "Julian Day")
+erCats25 = meanDensityByWeek(er25, ordersToInclude = "caterpillar", plot = TRUE, plotVar = 'fracSurveys',
+                             new = TRUE, color = 'red', allCats = FALSE, ylim = c(0, 20), ylab= "Percent of Surveys with Caterpillars", xlab= "Julian Day")
+
+jmCats24 = meanDensityByWeek(jm24, ordersToInclude = "caterpillar", plot = TRUE, plotVar = 'fracSurveys',
+                             new = FALSE, color = 'orange', allCats = FALSE)
+prCats24 = meanDensityByWeek(pr24, ordersToInclude = "caterpillar", plot = TRUE, plotVar = 'fracSurveys',
+                             new = FALSE, color = 'green', allCats = FALSE)
+bgCats24 = meanDensityByWeek(bg24, ordersToInclude = "caterpillar", plot = TRUE, plotVar = 'fracSurveys',
+                             new = FALSE, color = 'blue', allCats = FALSE)
+uncCats24 = meanDensityByWeek(unc24, ordersToInclude = "caterpillar", plot = TRUE, plotVar = 'fracSurveys',
+                             new = FALSE, color = 'violet', allCats = FALSE)
+
+
+
 #Cat data 2024
 pr24 = filter(fullDataset, Name== "Prairie Ridge Ecostation", Year== 2024)
 prCats24 = meanDensityByWeek(pr24, ordersToInclude = "caterpillar")

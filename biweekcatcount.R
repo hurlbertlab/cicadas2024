@@ -12,7 +12,7 @@ library(sf)
 library(stringr)
 
 #preparing caterpillar survey data
-fullDataset = read.csv("data/fullDataset_2025-07-28.csv")
+fullDataset = read.csv("data/fullDataset_2024-08-17.csv")
 
 mutate_cond <- function(.data, condition, ..., envir = parent.frame()) {
   condition <- eval(substitute(condition), .data, envir)
@@ -61,10 +61,10 @@ meanDensityByWeek = function(surveyData,
                              ...)                  
 
 {
-#  surveyData = filter(fullDataset, 
-                      
-#                      Name== "Eno River State Park",
-#                      Year== 2024)
+  #  surveyData = filter(fullDataset, 
+  
+  #                      Name== "Eno River State Park",
+  #                      Year== 2024)
   
   if(length(ordersToInclude)==1 & ordersToInclude[1]=='All') {
     ordersToInclude = unique(surveyData$Group)
@@ -141,11 +141,11 @@ meanDensityByBiweek = function(surveyData,
                                ...)                  
 
 {
-#    surveyData = filter(fullDataset, 
-#                      
-#                      Name== "Eno River State Park",
-#                      Year== 2024)
-    
+  #    surveyData = filter(fullDataset, 
+  #                      
+  #                      Name== "Eno River State Park",
+  #                      Year== 2024)
+  
   if(length(ordersToInclude)==1 & ordersToInclude[1]=='All') {
     ordersToInclude = unique(surveyData$Group)
   }
@@ -207,10 +207,10 @@ meanDensityByBiweek = function(surveyData,
 
 srvyData <- fullDataset%>%
   filter(Year %in% c(2024:2025), Name %in% c("Eno River State Park",
-                                                                     "Triangle Land Conservancy - Johnston Mill Nature Preserve",
-                                                                     "Prairie Ridge Ecostation",
-                                                                     "NC Botanical Garden",
-                                                                     "UNC Chapel Hill Campus"))
+                                             "Triangle Land Conservancy - Johnston Mill Nature Preserve",
+                                             "Prairie Ridge Ecostation",
+                                             "NC Botanical Garden",
+                                             "UNC Chapel Hill Campus"))
 
 #preparing clay caterpillar data
 url = "https://docs.google.com/spreadsheets/d/1hi7iyi7xunriU2fvFpgNVDjO5ERML4IUgzTkQjLVYCo/edit?gid=0#gid=0"
@@ -222,13 +222,13 @@ df = gsheet2tbl(url) %>%
   mutate(AdjustedDate = DeployDate + 4,
          cicada_period = ifelse(AdjustedDate >= as.Date("2024-05-14") & AdjustedDate <= as.Date("2024-06-13"), 1, 0))%>%
   mutate(date = str_extract(AdjustedDate, pattern = "\\d+-\\d+-\\d+"),
-    year = as.integer(str_extract(DeployDate, "\\d+")),
-    leapyear = leap_year(year),
-    julianday = case_when(
-    str_detect(date, "-05") ~ 120 + leapyear + as.numeric(substr(date, 9, 10)),
-    str_detect(date, "-06") ~ 151 + leapyear + as.numeric(substr(date, 9, 10)),
-    str_detect(date, "-07") ~ 181 + leapyear + as.numeric(substr(date, 9, 10))),
-    julianweek = 7*floor(julianday/7) + 4)%>%
+         year = as.integer(str_extract(DeployDate, "\\d+")),
+         leapyear = leap_year(year),
+         julianday = case_when(
+           str_detect(date, "-05") ~ 120 + leapyear + as.numeric(substr(date, 9, 10)),
+           str_detect(date, "-06") ~ 151 + leapyear + as.numeric(substr(date, 9, 10)),
+           str_detect(date, "-07") ~ 181 + leapyear + as.numeric(substr(date, 9, 10))),
+         julianweek = 7*floor(julianday/7) + 4)%>%
   mutate(year = as.integer(str_extract(DeployDate, "\\d+")))
 
 birdPred = df %>%
@@ -240,16 +240,16 @@ birdPred = df %>%
 
 #grouping weeks by twos
 biweek = Vectorize(function(surveys, cday){
-    bpwc = birdPred%>%
-      ungroup()%>%
-      select(year, Name, julianday)%>%
-      filter((surveys$julianday[cday] >= (julianday - 7) & surveys$julianday[cday] <= (julianday + 6)) &
-               Name == surveys$Name[cday] &
-               year == surveys$Year[cday])
-    if(length(bpwc$julianday) == 1){return(bpwc$julianday[1])}
-    else{return(NA)}
-    },
-  vectorize.args = "cday")
+  bpwc = birdPred%>%
+    ungroup()%>%
+    select(year, Name, julianday)%>%
+    filter((surveys$julianday[cday] >= (julianday - 7) & surveys$julianday[cday] <= (julianday + 6)) &
+             Name == surveys$Name[cday] &
+             year == surveys$Year[cday])
+  if(length(bpwc$julianday) == 1){return(bpwc$julianday[1])}
+  else{return(NA)}
+},
+vectorize.args = "cday")
 bugwbird = biweek(srvyData, c(1:nrow(srvyData)))%>%unlist()
 
 srvyData = srvyData%>%
@@ -263,28 +263,28 @@ for (site in c("Eno River State Park",
                "Prairie Ridge Ecostation",
                "NC Botanical Garden",
                "UNC Chapel Hill Campus")){
-     
-     for (year in 2023:2024) {
-
-      siteyr = data.frame()
-      siteyr = rbind(siteyr, filter(srvyData, Name == site, Year == year))
-      catCountSY <- meanDensityByBiweek(surveyData = siteyr, ordersToInclude = 'caterpillar',
-                                   minLength = 0,        
-                                   jdRange = c(1,365),
-                                   outlierCount = 10000,
-                                   plot = FALSE,
-                                   minSurveyCoverage = 0.8,
-                                   allDates = TRUE,
-                                   new = TRUE,
-                                   color = 'black',
-                                   allCats = TRUE)%>%
-        select(nSurveys, meanDensity, fracSurveys, meanBiomass, weekbin) %>%
-        mutate(Name = site,
-               year = year)
-      
-      
-      catCount = rbind(catCount, catCountSY)
-     }
+  
+  for (year in 2023:2024) {
+    
+    siteyr = data.frame()
+    siteyr = rbind(siteyr, filter(srvyData, Name == site, Year == year))
+    catCountSY <- meanDensityByBiweek(surveyData = siteyr, ordersToInclude = 'caterpillar',
+                                      minLength = 0,        
+                                      jdRange = c(1,365),
+                                      outlierCount = 10000,
+                                      plot = FALSE,
+                                      minSurveyCoverage = 0.8,
+                                      allDates = TRUE,
+                                      new = TRUE,
+                                      color = 'black',
+                                      allCats = TRUE)%>%
+      select(nSurveys, meanDensity, fracSurveys, meanBiomass, weekbin) %>%
+      mutate(Name = site,
+             year = year)
+    
+    
+    catCount = rbind(catCount, catCountSY)
+  }
 }
 
 predvcount = right_join(catCount, birdPred, by = c('year', 'weekbin'='julianday', 'Name'))
@@ -301,55 +301,47 @@ pvcspec = function(site, yr, new = T, jdrange = c(100, 300), ...){
                                 "Prairie Ridge Ecostation",
                                 "NC Botanical Garden",
                                 "UNC Chapel Hill Campus")}
-  sitecolor = data.frame(Name = c("Eno River State Park",
-                           "Triangle Land Conservancy - Johnston Mill Nature Preserve",
-                           "Prairie Ridge Ecostation",
-                           "NC Botanical Garden",
-                           "UNC Chapel Hill Campus"),
-                         color = c("red", "orange", "darkgreen", "blue", "purple"))
-    pvcplot = predvcount %>%
-      filter(Name %in% Site | Name %in% site, 
-             year %in% yr,
-             weekbin >= jdrange[1],
-             weekbin <= jdrange[2])%>%
-      left_join(sitecolor, by = "Name")%>%
-      mutate(pch = case_when(year == 2024 ~ 1,
-                             year == 2025 ~ 18))
-    par(mar = c(5, 6, 3, 2))
-    l = lm(pctBird ~ fracSurveys, data = pvcplot)
-    if(new == T) {
-      plot(pvcplot$fracSurveys, pvcplot$pctBird,
-           xlim = c(0,50), ylim = c(0,50),
-           xlab = "Caterpillar Density", ylab = "Predation",
-           xaxt = "n",
-           col = pvcplot$color, cex = 2, pch = pvcplot$pch,
-           main = yr, cex.main = 1, ...)
-      axis(1, at = seq(0, 100, by = 10), las = 1)
-    }
-    if(new == F){
-      points(pvcplot$fracSurveys, pvcplot$pctBird,
-           xlim = c(0,50), ylim = c(0,50),
+  pvcplot = predvcount %>%
+    filter(Name %in% Site | Name %in% site, 
+           year %in% yr,
+           weekbin >= jdrange[1],
+           weekbin <= jdrange[2])%>%
+    mutate(color = case_when(Name == "Eno River State Park" ~ "red",
+                             Name == "Triangle Land Conservancy - Johnston Mill Nature Preserve" ~ "orange",
+                             Name == "Prairie Ridge Ecostation" ~ "darkgreen",
+                             Name == "NC Botanical Garden" ~ "blue",
+                             Name == "UNC Chapel Hill Campus" ~ "purple"))%>%
+    mutate(pch = case_when(year == 2024 ~ 1,
+                           year == 2025 ~ 18))
+  #print(pvcplot)
+  par(mar = c(5, 6, 8, 2))
+  l = lm(pctBird ~ fracSurveys, data = pvcplot)
+  #m = lm(pctBird ~ fracSurveys, data = pvcplot)
+  if(new == T) {
+    plot(pvcplot$fracSurveys, pvcplot$pctBird,
+         xlab = "Caterpillar Density", ylab = "Predation",
+         xaxt = "n",
+         col = pvcplot$color, cex = 2, pch = pvcplot$pch,
+         main = c(unique(pvcplot$Name), yr), cex.main = 1, ...)
+    axis(1, at = seq(0, 100, by = 10), las = 1)
+  }
+  if(new == F){
+    points(pvcplot$fracSurveys, pvcplot$pctBird,
            xlab = "Caterpillar Density", ylab = "Predation",
            xaxt = "n", 
            col = pvcplot$color, cex = 2, pch = pvcplot$pch,
-           main = yr, cex.main = 1, ...)
-      axis(1, at = seq(0, 100, by = 10), las = 1)
-    }
-    abline(l)
-    summary(l)
-    legend("topright", legend = Site,
-           col = unique(pvcplot$color),
-           cex = 0.5,
-           lty = 1,
-           lwd = 2)
-    
-    return(l)
+           main = c(unique(pvcplot$Name), yr), cex.main = 1, ...)
+    axis(1, at = seq(0, 100, by = 10), las = 1)
+  }
+  abline(l)
+  summary(l)
+  
+  return(l)
 }
 
 par(mfrow = c(1, 2))
-pvcspec(site = c('any'), yr = c(2024), jdrange = (c(100,160)))
-pvcspec(site = c('any'), yr = c(2024), jdrange = (c(160,200)))
+pvcspec(site = c('any'), yr = c(2024))
+pvcspec(site = c('any'), yr = c(2025), new = F)
 
 
 
-    

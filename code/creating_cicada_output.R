@@ -187,9 +187,9 @@ pridgerow <- cicada_noise %>%
   filter(jd > 136, jd < 150, site == "pridge") %>%
   mutate(
     jd = 143,
-    calculated_mean_noise = mean_noise
+    cicadaIndex = mean_noise
   ) %>%
-  select(site, jd, calculated_mean_noise)
+  select(site, jd, cicadaIndex)
 
 # Function to linearly interpolate mean_noise at a chosen day (x_new) for one site
 get_imputed_value <- function(df, chosen_site, x_new = 143) {
@@ -213,7 +213,7 @@ imputed_values <- cicada_period_data %>%
   distinct(site) %>%
   mutate(
     jd = 143,
-    calculated_mean_noise = case_when(
+    cicadaIndex = case_when(
       site == "eno"   ~ get_imputed_value(cicada_period_data, "eno",   143),
       site == "jmill" ~ get_imputed_value(cicada_period_data, "jmill", 143),
       site == "ncbg"  ~ get_imputed_value(cicada_period_data, "ncbg",  143),

@@ -1,3 +1,11 @@
+# This script extracts the amplitude of cicada calls from recordings over 
+# multiple sites and dates. Within the range of 0.9 - 1.2 kHz, a running 
+# average of the sound amplitude by frequency spectrum is taken to smooth
+# out spikes and the maximum amplitude within that frequency band is
+# saved for each recording. The maximum amplitude of a reference tone
+# played in each recording is also stored.
+
+
 library(warbleR)
 library(tuneR)
 library(seewave)

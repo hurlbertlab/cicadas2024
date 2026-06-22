@@ -13,8 +13,17 @@ library(dplyr)     # Data manipulation
 # Caterpillars Count! raw data subsetted to the 5 NC sites and the years 2024-2026
 dataset = read.csv('data/cc_cicada_analysis_data_2024-2026.csv')
 
-# Cicada density index
+# Cicada density index by site
+cicadaLevels = read.csv("data/cicada_noise_by_site_on_day143.csv") %>%
+  mutate(Name = case_when(site == "eno" ~ "Eno River State Park",
+                          site == "jmill" ~ "Triangle Land Conservancy - Johnston Mill Nature Preserve",
+                          site == "ncbg" ~ "NC Botanical Garden",
+                          site == "unc" ~ "UNC Chapel Hill Campus",
+                          site == "pridge" ~ "Prairie Ridge Ecostation")) %>%
+  select(Name, cicadaIndex)
 
+# NOTE: The "cicada period" is designated as between days 121-159 (i.e. thru June 7).
+# See the cicada amplitude by week plot created in creating_cicada_output.r
 
 dat = dataset %>%
   group_by(Name, ID, PlantFK, LocalDate, julianday, Year, ObservationMethod, WetLeaves, Group, sciName) %>%
@@ -23,7 +32,8 @@ dat = dataset %>%
   filter(julianday %in% 121:212) %>% # May 1 to July 31
   mutate(Period = ifelse(julianday >= 121 & julianday < 160, "cicada", "post_cicada"),
          Site = factor(Name),
-         Week = (julianweek - 4)/7) %>% 
+         Week = (julianday - 4)/7) %>% 
+  left_join(cicadaLevels, by = 'Name')
   
 
 # Expected columns in dat:
@@ -78,7 +88,7 @@ dat$ObservationMethod <- factor(dat$ObservationMethod, levels = c("Visual", "Bea
 # represents the effect at mean cicada density across sites, not at zero density.
 # Do NOT scale (divide by SD) — the raw units of cicada density are interpretable.
 dat$cicada_density_c <- as.numeric(
-  scale(dat$site_cicada_density, center = TRUE, scale = FALSE)
+  scale(dat$cicadaIndex, center = TRUE, scale = FALSE)
 )
 
 # Center Week at its grand mean across the full season.

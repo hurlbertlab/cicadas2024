@@ -87,7 +87,7 @@ dat$ObservationMethod <- factor(dat$ObservationMethod, levels = c("Visual", "Bea
 # Center cicada density at its grand mean so that the main effect coefficient
 # represents the effect at mean cicada density across sites, not at zero density.
 # Do NOT scale (divide by SD) — the raw units of cicada density are interpretable.
-dat$cicada_density_c <- as.numeric(
+dat$cicadaIndex_c <- as.numeric(
   scale(dat$cicadaIndex, center = TRUE, scale = FALSE)
 )
 
@@ -124,7 +124,7 @@ m1 <- glmmTMB(
     
     # --- Site-level dose-response ------------------------------------------
   
-  cicada_density_c +
+  cicadaIndex_c +
     # Does between-site variation in cicada density predict overall caterpillar
     # occurrence across all years and periods?
     # CAUTION: this effect is estimated from between-site variation at 5 sites
@@ -144,12 +144,12 @@ m1 <- glmmTMB(
   
   (1 | Site) +
     # Site-level random intercept. Accounts for between-site differences in
-    # baseline caterpillar occurrence not captured by cicada_density_c.
+    # baseline caterpillar occurrence not captured by cicadaIndex_c.
     # IMPORTANT NOTE: estimated from only 5 groups. The variance component
     # will be imprecise. Singular fit (variance near zero) is possible and
     # should be reported transparently rather than treated as a model failure.
     # Its primary function here is to prevent pseudoreplication of the
-    # cicada_density_c effect by ensuring branch-level observations within
+    # cicadaIndex_c effect by ensuring branch-level observations within
     # a site are not treated as independent evidence about between-site
     # relationships.
     
@@ -177,7 +177,7 @@ VarCorr(m1)
 
 # Key things to check:
 # 1. Is the Site variance component very small (near zero)?
-#    This means cicada_density_c and other fixed effects are accounting
+#    This means cicadaIndex_c and other fixed effects are accounting
 #    for most between-site variation. Acceptable — report it.
 # 2. Is the Branch variance component of reasonable magnitude?
 #    Expect it to be positive and non-trivial given that branches
@@ -245,12 +245,12 @@ pairs(emm_YP, reverse = TRUE)
 # ---------------------------------------------------------
 # 4c. Cicada density effect across years
 # ---------------------------------------------------------
-# To Visualize the cicada_density_c effect, generate predictions across
+# To Visualize the cicadaIndex_c effect, generate predictions across
 # the observed range of cicada densities
 density_range <- data.frame(
-  cicada_density_c = seq(
-    min(dat$cicada_density_c),
-    max(dat$cicada_density_c),
+  cicadaIndex_c = seq(
+    min(dat$cicadaIndex_c),
+    max(dat$cicadaIndex_c),
     length.out = 50
   ),
   Period        = factor("cicada",    levels = levels(dat$Period)),
@@ -265,7 +265,7 @@ density_range$predicted <- predict(m1,
                                    re.form  = NA)   # population-level prediction,
 # ignoring random effects
 # Plot predicted occurrence probability vs. cicada density
-plot(predicted ~ cicada_density_c, data = density_range, type = "l",
+plot(predicted ~ cicadaIndex_c, data = density_range, type = "l",
      xlab = "Cicada density (centered)",
      ylab = "Predicted caterpillar occurrence probability",
      main = "Cicada density effect (cicada period, 2024, Visual survey)")
@@ -279,13 +279,13 @@ plot(predicted ~ cicada_density_c, data = density_range, type = "l",
 # ---------------------------------------------------------
 # Tests whether the between-year difference in caterpillar occurrence
 # scales with site-level cicada density.
-# This adds 2 coefficients (2 Year contrasts x cicada_density_c).
+# This adds 2 coefficients (2 Year contrasts x cicadaIndex_c).
 # Treat as EXPLORATORY given only 5 sites.
 
 m2 <- glmmTMB(
   occurrence ~
     Year * Period +
-    Year * cicada_density_c +   # Does the cicada year effect on caterpillar
+    Year * cicadaIndex_c +   # Does the cicada year effect on caterpillar
     # occurrence scale with cicada density?
     Week_c +
     ObservationMethod +
@@ -296,43 +296,3 @@ m2 <- glmmTMB(
 )
 
 AIC(m1, m2)
-# Prefer m2 only if delta AIC > 2 AND the interaction aligns with
-# the a priori dose-response prediction (not just any improvement).
-
-# ---------------------------------------------------------
-# 5b. AR(1) extension if residual autocorrelation is substantial
-# ---------------------------------------------------------
-# glmmTMB supports AR(1) via ar1(), which requires the time variable
-# to be a consecutive integer factor within each grouping unit.
-
-# Create consecutive time index within each Branch x Year combination.
-# Branches with missing weeks will violate the "consecutive" assumption
-# — check for and handle gaps before using this extension.
-
-dat <- dat %>%
-  group_by(PlantFK, Year, ObservationMethod) %>%
-  arrange(Week) %>%
-  mutate(time_idx = factor(row_number())) %>%
-  ungroup()
-
-# AR(1) within Branch x Year x ObservationMethod combinations.
-# This replaces the simple branch random intercept with an AR(1) structure
-# that both captures autocorrelation AND allows for branch-level variation.
-m1_ar1 <- glmmTMB(
-  occurrence ~
-    Year * Period +
-    cicada_density_c +
-    Week_c +
-    ObservationMethod +
-    (1 | Site) +
-    ar1(time_idx + 0 | PlantFK:Year:ObservationMethod),
-  # AR(1) within each branch-year-method time series
-  # The + 0 suppresses a fixed intercept within the ar1 term
-  data   = dat,
-  family = binomial(link = "logit")
-)
-
-AIC(m1, m1_ar1)
-# If this model fails to converge (likely given the large number of
-# Branch:Year:ObservationMethod groups), retain m1 with a note acknowledging
-# potential residual autocorrelation as a limitation.

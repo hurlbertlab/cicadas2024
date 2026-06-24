@@ -87,14 +87,22 @@ dat$ObservationMethod <- factor(dat$ObservationMethod, levels = c("Visual", "Bea
 # Center cicada density at its grand mean so that the main effect coefficient
 # represents the effect at mean cicada density across sites, not at zero density.
 # Do NOT scale (divide by SD) — the raw units of cicada density are interpretable.
-dat$cicadaIndex_c <- as.numeric(
-  scale(dat$cicadaIndex, center = TRUE, scale = FALSE)
-)
+# Compute mean across the 5 unique site cicada density values
+# Each site contributes equally regardless of how many observations it has
+site_cicada_values <- dat %>%
+  distinct(Site, cicadaIndex) %>%
+  pull(cicadaIndex)
+
+cicada_center <- mean(site_cicada_values)
+
+# Now center the variable
+dat$cicadaIndex_c <- dat$cicadaIndex - cicada_center
 
 # Center Week at its grand mean across the full season.
 # This makes the model intercept interpretable as occurrence at the 
 # mid-season average rather than at week zero.
-dat$Week_c <- dat$Week - mean(dat$Week)
+week_center <- mean(unique(dat$Week))
+dat$Week_c  <- dat$Week - week_center
 
 # =========================================================
 # SECTION 2: PRIMARY MODEL
@@ -296,3 +304,331 @@ m2 <- glmmTMB(
 )
 
 AIC(m1, m2)
+
+
+# ==============================================
+# SECTION 6: GRAPHING
+# ==============================================
+
+library(ggplot2)
+library(patchwork)   # for combining panels
+
+# -------------------------------------------------------
+# Site-level observed occurrence means for data overlay
+# -------------------------------------------------------
+# These are the raw observed proportions — useful for showing the
+# actual data behind the model predictions. With 5 sites they are
+# few enough to plot individually without overloading the figure.
+
+site_year_means <- dat %>%
+  group_by(Site, Year) %>%
+  summarise(
+    mean_occurrence   = mean(occurrence),
+    cicadaIndex_c     = first(cicadaIndex_c),   # constant within site
+    .groups = "drop"
+  )
+
+site_year_period_means <- dat %>%
+  group_by(Site, Year, Period) %>%
+  summarise(
+    mean_occurrence   = mean(occurrence),
+    cicadaIndex_c     = first(cicadaIndex_c),
+    .groups = "drop"
+  )
+
+# Recover original (uncentered) cicada density scale for axis labeling
+# attr() retrieves the centering value stored by scale()
+cicada_center <- mean(dat$cicadaIndex, na.rm = TRUE)
+dat$cicadaIndex_c <- dat$cicadaIndex - cicada_center
+
+site_year_means$cicada_density_orig        <- site_year_means$cicadaIndex_c        + cicada_center
+site_year_period_means$cicada_density_orig <- site_year_period_means$cicadaIndex_c + cicada_center
+
+# -------------------------------------------------------
+# Consistent color scheme and labels used across all plots
+# -------------------------------------------------------
+year_colors <- c("2024" = "#D55E00",   # orange-red: cicada year
+                 "2025" = "#0072B2",   # blue: year+1
+                 "2026" = "#009E73")   # teal: year+2
+
+year_labels <- c("2024" = "2024 (cicada year)",
+                 "2025" = "2025 (year +1)",
+                 "2026" = "2026 (year +2)")
+
+# -------------------------------------------------------
+# Generate prediction grid across cicada density range
+# Fixed at: cicada period, mean week, visual survey method
+# Population-level (re.form = NA ignores random effects)
+# -------------------------------------------------------
+
+cicada_seq <- seq(min(dat$cicadaIndex_c),
+                  max(dat$cicadaIndex_c),
+                  length.out = 100)
+
+pred_grid <- expand.grid(
+  cicadaIndex_c     = cicada_seq,
+  Year              = factor(c("2024", "2025", "2026"),
+                             levels = levels(dat$Year)),
+  Period            = factor("cicada", levels = levels(dat$Period)),
+  Week_c            = 0,
+  ObservationMethod = factor("Visual", levels = levels(dat$ObservationMethod))
+)
+
+# CRITICAL: prediction grid must carry the same contrast structure
+# as the fitted model, otherwise predictions will be wrong
+contrasts(pred_grid$Year) <- contrasts(dat$Year)
+
+# Predict on link scale, then transform manually so CIs are
+# computed on log-odds scale before back-transforming —
+# this ensures CIs are bounded within [0,1]
+preds <- predict(m2,
+                 newdata  = pred_grid,
+                 type     = "link",
+                 se.fit   = TRUE,
+                 re.form  = NA)
+
+pred_grid <- pred_grid %>%
+  mutate(
+    fit                  = preds$fit,
+    se                   = preds$se.fit,
+    lower_95             = plogis(fit - 1.96 * se),
+    upper_95             = plogis(fit + 1.96 * se),
+    predicted            = plogis(fit),
+    cicada_density_orig  = cicadaIndex_c + cicada_center
+  )
+
+# -------------------------------------------------------
+# Plot
+# -------------------------------------------------------
+
+p1 <- ggplot(pred_grid,
+             aes(x     = cicada_density_orig,
+                 y     = predicted,
+                 color = Year,
+                 fill  = Year)) +
+  
+  # Confidence ribbons — kept semi-transparent; their width honestly
+  # communicates the uncertainty in a relationship from 5 sites
+  geom_ribbon(aes(ymin = lower_95, ymax = upper_95),
+              alpha = 0.15, color = NA) +
+  
+  # Prediction lines
+  geom_line(linewidth = 1.0) +
+  
+  # Observed site-year means overlaid as points
+  # With 5 sites these are legible and add transparency about the
+  # raw data structure underlying the model
+  geom_point(data  = site_year_means,
+             aes(x = cicada_density_orig,
+                 y = mean_occurrence,
+                 color = Year),
+             size  = 3,
+             shape = 16) +
+  
+  scale_color_manual(values = year_colors, labels = year_labels) +
+  scale_fill_manual( values = year_colors, labels = year_labels,
+                     guide  = "none") +
+  
+  labs(
+    x        = "Site cicada density index",
+    y        = "Predicted caterpillar occurrence probability",
+    color    = NULL,
+    caption  = "Lines: model predictions (cicada period, visual survey, mean week)\nPoints: observed site means"
+  ) +
+  
+  theme_bw(base_size = 12) +
+  theme(legend.position = "bottom",
+        legend.text      = element_text(size = 10))
+
+p1
+
+
+
+# -------------------------------------------------------
+# Plot the cicada-year prediction MINUS the non-cicada-year
+# average prediction across the cicada density gradient.
+# This directly visualizes the interaction coefficient.
+# A line with positive slope = higher caterpillar occurrence
+# in the cicada year at high-density sites relative to
+# non-cicada-year baseline.
+# -------------------------------------------------------
+
+# Separate prediction grids per year
+make_preds <- function(yr) {
+  grid <- data.frame(
+    cicadaIndex_c     = cicada_seq,
+    Year              = factor(yr, levels = levels(dat$Year)),
+    Period            = factor("cicada", levels = levels(dat$Period)),
+    Week_c            = 0,
+    ObservationMethod = factor("Visual", levels = levels(dat$ObservationMethod))
+  )
+  contrasts(grid$Year) <- contrasts(dat$Year)
+  p <- predict(m2, newdata = grid, type = "link",
+               se.fit = TRUE, re.form = NA)
+  data.frame(cicadaIndex_c = cicada_seq,
+             fit = p$fit, se = p$se.fit, Year = yr)
+}
+
+preds_all <- bind_rows(lapply(c("2024", "2025", "2026"), make_preds))
+
+# Compute non-cicada-year average prediction (arithmetic mean of 2025 and 2026
+# on link scale, then difference from 2024)
+preds_wide <- preds_all %>%
+  select(cicadaIndex_c, Year, fit) %>%
+  tidyr::pivot_wider(names_from = Year, values_from = fit) %>%
+  mutate(
+    noncicada_avg = (`2025` + `2026`) / 2,
+    difference    = `2024` - noncicada_avg,   # on log-odds scale
+    cicada_density_orig = cicadaIndex_c + cicada_center
+  )
+
+# For the SE of the difference, propagate uncertainty properly.
+# In a simple linear combination, Var(a - (b+c)/2) = Var(a) + Var((b+c)/2)
+# Here we use delta method approximation via predict se values.
+preds_se_wide <- preds_all %>%
+  select(cicadaIndex_c, Year, se) %>%
+  tidyr::pivot_wider(names_from = Year, values_from = se) %>%
+  mutate(
+    se_difference = sqrt(`2024`^2 + ((`2025`^2 + `2026`^2) / 4))
+  )
+
+preds_diff <- left_join(preds_wide, preds_se_wide,
+                        by = "cicadaIndex_c") %>%
+  mutate(
+    lower_95 = difference - 1.96 * se_difference,
+    upper_95 = difference + 1.96 * se_difference
+  )
+
+# -------------------------------------------------------
+# Plot on log-odds (link) scale — the difference is most
+# naturally interpreted there since the interaction
+# coefficient IS on the log-odds scale
+# -------------------------------------------------------
+
+p2 <- ggplot(preds_diff,
+             aes(x = cicada_density_orig, y = difference)) +
+  
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+  
+  geom_ribbon(aes(ymin = lower_95, ymax = upper_95),
+              fill = "#D55E00", alpha = 0.2) +
+  
+  geom_line(color = "#D55E00", linewidth = 1.1) +
+  
+  labs(
+    x       = "Site cicada density index",
+    y       = "Cicada year vs. non-cicada average\n(log-odds difference)",
+    caption = "Positive values indicate relatively higher caterpillar\noccurrence in the cicada year at a given site density"
+  ) +
+  
+  theme_bw(base_size = 12)
+
+p2
+
+
+
+# -------------------------------------------------------
+# Marginal predicted probabilities for each Year x Period
+# combination, at mean cicada density and mean week,
+# averaged over survey method
+# -------------------------------------------------------
+
+emm_YP <- emmeans(m2,
+                  specs = ~ Period | Year,
+                  type  = "response",
+                  at    = list(cicadaIndex_c = 0, Week_c = 0))
+
+emm_df <- as.data.frame(emm_YP) %>%
+  rename(predicted = prob,
+         lower_95  = asymp.LCL,
+         upper_95  = asymp.UCL) %>%
+  mutate(
+    Year   = factor(Year, levels = c("2024", "2025", "2026")),
+    Period = factor(Period,
+                    levels = c("cicada", "post_cicada"),
+                    labels = c("Cicada\nperiod", "Post-cicada\nperiod"))
+  )
+
+# Observed site-period-year means for overlay
+# Recode Period labels to match emmeans output
+site_year_period_plot <- site_year_period_means %>%
+  mutate(
+    Period_label = factor(Period,
+                          levels = c("cicada", "post_cicada"),
+                          labels = c("Cicada\nperiod", "Post-cicada\nperiod"))
+  )
+
+p3 <- ggplot(emm_df,
+             aes(x     = Period,
+                 y     = predicted,
+                 color = Year,
+                 group = Year)) +
+  
+  # Confidence intervals
+  geom_errorbar(aes(ymin = lower_95, ymax = upper_95),
+                width    = 0.08,
+                position = position_dodge(width = 0.15)) +
+  
+  # Connecting lines
+  geom_line(position = position_dodge(width = 0.15),
+            linewidth = 0.9) +
+  
+  # Marginal mean points
+  geom_point(size     = 3,
+             position = position_dodge(width = 0.15)) +
+  
+  # Observed site means overlaid as smaller, semi-transparent points
+  # Jittered slightly to avoid overplotting across sites
+  geom_point(data  = site_year_period_plot,
+             aes(x = Period_label,
+                 y = mean_occurrence,
+                 color = Year),
+             size     = 1.8,
+             alpha    = 0.5,
+             shape    = 1,          # open circles distinguish from model estimates
+             position = position_dodge(width = 0.15)) +
+  
+  scale_color_manual(values = year_colors, labels = year_labels) +
+  
+  labs(
+    x       = NULL,
+    y       = "Predicted caterpillar occurrence probability",
+    color   = NULL,
+    caption = "Filled points and lines: model marginal means at mean cicada density\nOpen points: observed site means"
+  ) +
+  
+  theme_bw(base_size = 12) +
+  theme(legend.position = "bottom",
+        legend.text      = element_text(size = 10))
+
+p3
+
+
+
+# -------------------------------------------------------
+# Combine Option 1 (cicada density x Year) and Option 3
+# (Year x Period) into a single manuscript-ready figure.
+# Shared legend extracted and placed at bottom.
+# -------------------------------------------------------
+
+# Extract shared legend from p1
+# (requires cowplot or can be done within patchwork)
+combined <- (p1 + theme(legend.position = "none")) +
+  (p3 + theme(legend.position = "none")) +
+  plot_layout(ncol = 2, widths = c(1.1, 0.9)) +
+  plot_annotation(
+    tag_levels = "A",
+    theme = theme(plot.tag = element_text(face = "bold"))
+  )
+
+# Add shared legend below both panels
+# Extract legend from p1 as a grob
+legend_grob <- cowplot::get_legend(
+  p1 + theme(legend.position = "bottom",
+             legend.direction = "horizontal")
+)
+
+cowplot::plot_grid(combined,
+                   legend_grob,
+                   ncol    = 1,
+                   rel_heights = c(1, 0.08))

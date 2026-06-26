@@ -13,6 +13,7 @@ cicadaLevels = read.csv("data/cicada_noise_by_site_on_day143.csv") %>%
                           site == "pridge" ~ "Prairie Ridge Ecostation")) %>%
   select(Name, cicadaIndex)
 
+mean_cicada_across_sites = mean(cicadaLevels$cicadaIndex)
 
 # Read in clay caterpillar predation data
 url = "https://docs.google.com/spreadsheets/d/1hi7iyi7xunriU2fvFpgNVDjO5ERML4IUgzTkQjLVYCo/edit?gid=0#gid=0"
@@ -52,6 +53,9 @@ df = gsheet2tbl(url) %>%
     # visited during the same sampling week
     Bout = dense_rank(collect_monday)
   ) %>%
-  ungroup()
+  ungroup() %>%
+  left_join(cicadaLevels, by = 'Name') %>%
+    # center cicada index values
+  mutate(cicadaIndex_c = cicadaIndex - mean_cicada_across_sites)
 
 

@@ -22,40 +22,41 @@ url = "https://docs.google.com/spreadsheets/d/1hi7iyi7xunriU2fvFpgNVDjO5ERML4IUg
 #LandscapePrairie = read.csv("data/prairieridgeforest.csv")
 
 
-df = gsheet2tbl(url) %>%
+dat_clay = gsheet2tbl(url) %>%
   mutate(DeployDate = as.Date(DeployDate, format = "%m/%d/%Y"),
          CollectionDate = as.Date(CollectionDate, format = "%m/%d/%Y"),
-         AdjustedDate = DeployDate + 4,    # centering date to middle of the week of deployment
-         doy = yday(AdjustedDate),
-         Period = ifelse(doy >= 121 & doy < 160, "cicada", "post_cicada"),
          year = str_extract(DeployDate, "\\d+"),
-         # Floor each DeployDate to the Monday of its sampling week.
-         # week_start = 1 specifies Monday as the first day of the week.
-         # This produces the same Monday for all sites visited during the
-         # same Mon-Fri window, regardless of which specific day each site
-         # was visited, and regardless of year-to-year shifts in calendar dates.
-         collect_monday = floor_date(CollectionDate, unit = "week", week_start = 1),
+         # Floor to Monday of the sampling week, then subtract 1 day to get Sunday.
+         # A sampling bout occurs during a week Monday-Friday, with the average
+         # collection date across sites occurring on a Wednesday.
+         # Sunday represents the average midpoint of caterpillar deployment
+         # and is chosen as the day of year to represent predation activity.
+         collect_sunday = floor_date(CollectionDate, unit = "week", week_start = 1) - days(1),
+         bout_doy = yday(collect_sunday),
+         Period = ifelse(bout_doy >= 121 & bout_doy < 160, "cicada", "post_cicada"),
          
-         # Day of year of the deployment Monday.
-         # This is the common temporal reference assigned to ALL observations
-         # within the same bout, overriding the site-specific doy values
-         # that reflect consecutive-day site visits. Assigning the Monday doy
-         # avoids the confound between site visitation order and apparent
-         # temporal position discussed earlier.
-         bout_doy = yday(collect_monday)
   ) %>%
   
   # Assign sequential bout numbers within each year
   group_by(year) %>%
   mutate(
     # dense_rank correctly assigns the same bout number to all observations
-    # sharing the same deploy_monday within a year, which is all sites
+    # sharing the same collect_sunday within a year, which is all sites
     # visited during the same sampling week
-    Bout = dense_rank(collect_monday)
+    Bout = dense_rank(collect_sunday)
   ) %>%
   ungroup() %>%
   left_join(cicadaLevels, by = 'Name') %>%
     # center cicada index values
   mutate(cicadaIndex_c = cicadaIndex - mean_cicada_across_sites)
 
+# Center the bout_doy
+bout_doy_center <- dat_clay %>%
+  distinct(year, Bout, bout_doy) %>%
+  pull(bout_doy) %>%
+  mean()
+
+cat("Bout doy centering value (Sunday-based):", round(bout_doy_center, 1), "\n")
+
+dat_clay$bout_day_c = dat_clay$bout_doy - bout_doy_center
 

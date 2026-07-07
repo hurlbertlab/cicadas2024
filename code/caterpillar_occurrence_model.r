@@ -10,8 +10,18 @@ library(dplyr)     # Data manipulation
 # SECTION 1: DATA PREPARATION
 # =========================================================
 
+# Temporary reading in of CC data for 5 sites for 2024-2026
+dataset = read.csv('../caterpillars-analysis-public/data/fullDataset_2026-07-07.csv') %>%
+  filter(Name %in% c("Eno River State Park",
+                     "Triangle Land Conservancy - Johnston Mill Nature Preserve",
+                     "NC Botanical Garden",
+                     "UNC Chapel Hill Campus",
+                     "Prairie Ridge Ecostation"),
+         Year %in% 2024:2026)
+
+
 # Caterpillars Count! raw data subsetted to the 5 NC sites and the years 2024-2026
-dataset = read.csv('data/cc_cicada_analysis_data_2024-2026.csv')
+#dataset = read.csv('data/cc_cicada_analysis_data_2024-2026.csv')
 
 # Cicada density index by site
 cicadaLevels = read.csv("data/cicada_noise_by_site_on_day143.csv") %>%
@@ -303,8 +313,11 @@ m2 <- glmmTMB(
   family = binomial(link = "logit")
 )
 
-AIC(m1, m2)
+AIC(m1, m2) 
 
+# Support for Model2
+
+summary(m2)
 
 # ==============================================
 # SECTION 6: GRAPHING

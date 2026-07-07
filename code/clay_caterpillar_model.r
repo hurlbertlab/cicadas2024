@@ -64,6 +64,8 @@ cat("Bout doy centering value (Sunday-based):", round(bout_doy_center, 1), "\n")
 
 dat_clay$bout_doy_c = dat_clay$bout_doy - bout_doy_center
 
+
+
 # ---------------------------------------------------------
 # Factor coding — Year and Period
 # ---------------------------------------------------------
@@ -88,6 +90,41 @@ print(summary(branch_obs$n_obs))
 
 # At one site (UNC), 20 of 30 branch codes were consistent across all three years; the remaining 10 were sampled in 2024 and 2025 only, and a different 10 in 2026 only, with replacement branches on similar tree species. All unique codes were treated as distinct units in the branch random effect.
 
+
+# ---------------------------------------------------------
+# Bout_ID: unique site × year × period combination
+# ---------------------------------------------------------
+dat_clay$Bout_ID <- interaction(dat_clay$Name,
+                                dat_clay$year,
+                                dat_clay$Period,
+                                drop = TRUE)
+
+cat("Number of bouts:", nlevels(dat_clay$Bout_ID), "\n")
+# Expected: 30 (5 sites × 3 years × 2 periods)
+
+dat_clay %>%
+  group_by(Bout_ID) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  pull(n) %>%
+  summary()
+
+# ---------------------------------------------------------
+# Total strike events
+# ---------------------------------------------------------
+cat("Total bird strikes:", sum(dat_clay$Bird), "\n")
+cat("Total observations:", nrow(dat_clay), "\n")
+cat("Overall strike rate:",
+    round(mean(dat_clay$Bird) * 100, 1), "%\n")
+
+dat_clay %>%
+  group_by(year, Period) %>%
+  summarise(
+    n_deployed = n(),
+    n_strikes  = sum(Bird),
+    rate       = round(mean(Bird) * 100, 1),
+    .groups    = "drop"
+  ) %>%
+  print()
 
 # =========================================================
 # PRIMARY MODEL
@@ -148,12 +185,15 @@ m_bird1 <- glmmTMB(
     # Estimated from 5 groups — imprecise but necessary.
     # Singular fit should be reported transparently.
     
-    (1 | Code),
-  # Branch-level random intercept nested within site.
-  # Captures consistent differences among branches in baseline
-  # bird strike probability due to branch architecture,
-  # position, visibility, or host tree characteristics.
-  # ~150 branches × up to 12 observations each — well supported.
+    (1 | Bout_ID),
+  # Bout-level random intercept (site × year × period).
+  # Captures within-bout clustering: clay caterpillars deployed
+  # together share the same local bird community, weather
+  # conditions, and potential for repeat visits by active
+  # individual birds. More relevant than branch-level clustering
+  # given ~1.6 expected strikes per branch across all visits.
+  # Note: Bout_ID is nested within Site by construction,
+  # so these two random effects form an implicit hierarchy.
   
   data   = dat_clay,
   family = binomial(link = "logit")
@@ -162,59 +202,67 @@ m_bird1 <- glmmTMB(
 summary(m_bird1)
 VarCorr(m_bird1)
 
-# =========================================================
-# OPTIONAL EXTENSION: Circle random intercept
-# =========================================================
-# Include only if the Circle inspection above suggests
-# meaningful spatial clustering within sites
 
-m_bird1_circle <- glmmTMB(
-  Bird ~
-    Year * Period +
-    Year * cicadaIndex_c +
-    Week_c +
-    (1 | Name) +
-    (1 | Name:Circle) +   # Circle nested within Site
-    (1 | Code),
-  data   = dat_clay,
-  family = binomial(link = "logit")
-)
+# ---------------------------------------------------------
+# Compare with site-only random effect model
+# ---------------------------------------------------------
+# With only 30 bouts, the bout variance component may also
+# be near zero. If so, the simplest defensible model has
+# only the site random intercept.
 
-AIC(m_bird1, m_bird1_circle)
-
-# =========================================================
-# COMPARISON WITH MODEL OMITTING Week_c
-# =========================================================
 m_bird0 <- glmmTMB(
   Bird ~
     Year * Period +
     Year * cicadaIndex_c +
-    (1 | Name) +
-    (1 | Code),
+    bout_doy_c +
+    (1 | Name),
   data   = dat_clay,
   family = binomial(link = "logit")
 )
 
 AIC(m_bird0, m_bird1)
+VarCorr(m_bird0)
+
+# df      AIC
+# m_bird0 11 1573.433
+# m_bird1 12 1575.028
+
+# Adding Bout_ID random effect does not add much, preferred (equivalent) model is the simpler m_bird0.
 
 # =========================================================
-# SIGN COMPARISON ACROSS MODELS
+# COMPARISON WITH MODEL OMITTING bout_doy_c
 # =========================================================
-# The mechanistic coherence of results across both models
-# is the most important single interpretive check.
+m_bird0b <- glmmTMB(
+  Bird ~
+    Year * Period +
+    Year * cicadaIndex_c +
+    (1 | Name),
+  data   = dat_clay,
+  family = binomial(link = "logit")
+)
 
-coef_caterpillar <- fixef(m2)$cond[
-  "Yearcicada_vs_noncicada:cicadaIndex_c"]
-coef_bird        <- fixef(m_bird1)$cond[
-  "Yearcicada_vs_noncicada:cicadaIndex_c"]
+AIC(m_bird0, m_bird0b)
 
-cat("\nCross-model sign comparison:\n")
-cat("Caterpillar occurrence (m2)  - cicada year × density:",
-    round(coef_caterpillar, 3), "\n")
-cat("Bird strike rate (m_bird1)   - cicada year × density:",
-    round(coef_bird, 3), "\n")
-cat("Signs opposite as predicted (negative bird, positive caterpillar)?",
-    sign(coef_caterpillar) != sign(coef_bird), "\n")
+#          df      AIC
+# m_bird0  11 1573.433
+# m_bird0b 10 1571.679
+
+# Removing bout_doy_c decreases AIC by 1.75. Again the direction favors the simpler model. The binary Period variable is capturing all the meaningful temporal variation in strike rate across the season — the additional linear trend within periods adds noise rather than signal with only 4 time points.
+
+# Side by side coefficient comparison for key terms
+key_terms <- c("Yearcicada_vs_noncicada:cicadaIndex_c",
+               "Yearcicada_vs_noncicada:Periodpost_cicada",
+               "Yearyr1_vs_yr2",
+               "Periodpost_cicada")
+
+coefs_caterpillar <- summary(m2)$coefficients$cond[key_terms, ]
+coefs_bird        <- summary(m_bird0b)$coefficients$cond[key_terms, ]
+
+cat("\nCaterpillar occurrence model:\n")
+print(round(coefs_caterpillar[, c("Estimate", "Std. Error", "Pr(>|z|)")], 3))
+
+cat("\nBird strike model:\n")
+print(round(coefs_bird[, c("Estimate", "Std. Error", "Pr(>|z|)")], 3))
 
 # =========================================================
 # MARGINAL MEANS FOR VISUALIZATION
@@ -225,7 +273,7 @@ emm_bird_YP <- emmeans(m_bird1,
                        specs = ~ Period | Year,
                        type  = "response",
                        at    = list(cicadaIndex_c = 0,
-                                    Week_c        = 0))
+                                    bout_doy_c        = 0))
 print(emm_bird_YP)
 pairs(emm_bird_YP, reverse = TRUE)
 
@@ -238,7 +286,7 @@ pred_grid_bird <- expand.grid(
                          levels = levels(dat_clay$Year)),
   Period        = factor("cicada",
                          levels = levels(dat_clay$Period)),
-  Week_c        = 0
+  bout_doy_c        = 0
 )
 
 contrasts(pred_grid_bird$Year) <- contrasts(dat_clay$Year)

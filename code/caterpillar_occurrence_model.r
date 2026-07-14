@@ -11,7 +11,7 @@ library(dplyr)     # Data manipulation
 # =========================================================
 
 # Temporary reading in of CC data for 5 sites for 2024-2026
-dataset = read.csv('../caterpillars-analysis-public/data/fullDataset_2026-07-07.csv') %>%
+dataset = read.csv('../caterpillars-analysis-public/data/fullDataset_2026-07-14.csv') %>%
   filter(Name %in% c("Eno River State Park",
                      "Triangle Land Conservancy - Johnston Mill Nature Preserve",
                      "NC Botanical Garden",
@@ -325,6 +325,268 @@ summary(m2)
 
 library(ggplot2)
 library(patchwork)   # for combining panels
+library(scales)
+
+# Underlying caterpillar phenology patterns across the 5 sites
+# ---------------------------------------------------------
+# Visual encoding scheme
+#
+# The goal is redundant encoding: 2024 differs from
+# 2025/2026 in color, line weight, AND line type, so
+# the distinction survives greyscale printing and
+# readers with color vision deficiency.
+#
+# 2024: vivid red-orange, thick, solid
+# 2025: muted steel blue, thin, solid   } similar to
+# 2026: lighter steel blue, thin, dashed } each other
+#
+# Color distance between 2025 and 2026 is intentionally
+# small. Color distance between 2024 and both non-cicada
+# years is large — warm vs. cool, vivid vs. muted.
+# ---------------------------------------------------------
+
+year_colors_occ  <- c("2024" = "#CC3311",
+                      "2025" = "#5B8DB8",
+                      "2026" = "#A8C4D8")
+
+year_labels_occ  <- c("2024" = "2024 (cicada year)",
+                      "2025" = "2025 (year +1)",
+                      "2026" = "2026 (year +2)")
+
+year_linewidths  <- c("2024" = 1.5, "2025" = 0.7, "2026" = 0.7)
+year_linetypes   <- c("2024" = "solid", "2025" = "solid",  "2026" = "dashed")
+year_pointsizes  <- c("2024" = 2.3,    "2025" = 1.3,       "2026" = 1.3)
+
+# ---------------------------------------------------------
+# Weekly observed occurrence rates
+# Averaged across all branches and both survey methods
+# within each Site × Year × Week combination.
+#
+# Note: beat sheet surveys show systematically lower
+# detection rates than visual surveys (model coefficient
+# -0.33). Averaging across methods is acceptable for
+# visualizing seasonal patterns since the method effect
+# is a fixed offset that does not distort curve shape.
+# To restrict to visual surveys only, add:
+#   filter(ObservationMethod == "Visual")
+# before the group_by.
+# ---------------------------------------------------------
+
+weekly_occ <- dat %>%
+  group_by(Site, Year, Week) %>%
+  summarise(
+    mean_occ = mean(occurrence),
+    n_obs    = n(),
+    .groups  = "drop"
+  ) %>%
+  mutate(
+    # Factor levels: 2025 and 2026 drawn first, 2024 drawn
+    # last so it sits on top where lines overlap
+    Year = factor(Year, levels = c("2025", "2026", "2024")),
+    Site = factor(Site)
+  )
+
+# ---------------------------------------------------------
+# Cicada period bounds for background shading
+#
+# Derived from the Period variable in dat so the shaded
+# window reflects your actual data coding.
+# The same shaded region is applied to all five panels:
+# in 2024 it marks when cicadas were present; in 2025
+# and 2026 it marks the equivalent seasonal window for
+# visual comparison.
+# ---------------------------------------------------------
+
+cicada_bounds <- dat %>%
+  filter(Period == "cicada") %>%
+  summarise(
+    xmin = min(Week) - 0.4,
+    xmax = max(Week) + 0.4
+  )
+
+cat("Cicada period shading spans weeks",
+    cicada_bounds$xmin + 0.4, "to",
+    cicada_bounds$xmax - 0.4, "\n")
+
+# ---------------------------------------------------------
+# Optional: abbreviated site labels
+#
+# Long site names will be wrapped by label_wrap_gen()
+# below, but if you want custom short labels, define
+# them here as a named vector matching levels(weekly_occ$Site)
+#
+site_short <- c(
+   "Triangle Land Conservancy - Johnston Mill Nature Preserve" = "Johnston Mill",
+   "UNC Chapel Hill Campus" = "UNC Chapel Hill",
+   "Eno River State Park" = "Eno River State Park",
+   "NC Botanical Garden" = "NC Botanical Garden",
+   "Prairie Ridge Ecostation" = "Prairie Ridge Ecostation"
+)
+# Then replace labeller = label_wrap_gen(width = 28) with
+# labeller = labeller(Site = site_short)
+# ---------------------------------------------------------
+
+# ---------------------------------------------------------
+# Figure
+# ---------------------------------------------------------
+
+fig_weekly <- ggplot(
+  weekly_occ,
+  aes(x     = Week,
+      y     = mean_occ,
+      color = Year,
+      group = Year)
+) +
+  
+  # Cicada period background shading
+  # annotate() applies identically to all facets
+  # Warm tint coordinates with the 2024 red line
+  annotate(
+    "rect",
+    xmin  = cicada_bounds$xmin,
+    xmax  = cicada_bounds$xmax,
+    ymin  = -Inf,
+    ymax  = Inf,
+    fill  = "gray90",
+    alpha = 0.65
+  ) +
+  
+  # Vertical reference line at cicada period end
+  #annotate(
+  #  "segment",
+  #  x         = cicada_bounds$xmax,
+  #  xend      = cicada_bounds$xmax,
+  #  y         = -Inf,
+  #  yend      = Inf,
+  #  color     = "grey55",
+  #  linewidth = 0.4,
+  #  linetype  = "dashed"
+  #) +
+  
+  # Lines — linewidth and linetype vary by year
+  geom_line(aes(linewidth = Year,
+                linetype  = Year)) +
+  
+  # Points — size varies by year
+  geom_point(aes(size = Year)) +
+  
+  # -------------------------------------------------------
+# Scales
+# -------------------------------------------------------
+
+scale_color_manual(
+  values = year_colors_occ,
+  labels = year_labels_occ,
+  # Reorder labels to match desired legend order 2024, 2025, 2026
+  # even though factor levels are ordered for drawing
+  breaks = c("2024", "2025", "2026"),
+  name   = NULL
+) +
+  scale_linewidth_manual(
+    values = year_linewidths,
+    guide  = "none"
+  ) +
+  scale_linetype_manual(
+    values = year_linetypes,
+    guide  = "none"
+  ) +
+  scale_size_manual(
+    values = year_pointsizes,
+    guide  = "none"
+  ) +
+  scale_y_continuous(
+    labels = percent_format(accuracy = 1),
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.06))
+  ) +
+  scale_x_continuous(
+    breaks = scales::pretty_breaks(n = 5)
+  ) +
+  
+  # -------------------------------------------------------
+# Facet: one panel per site, 2 columns
+# 5 panels → rows of 2, 2, 1; lower-right cell empty
+# label_wrap_gen wraps long site names at word boundaries
+# -------------------------------------------------------
+
+facet_wrap(
+  ~ Site,
+  ncol     = 2,
+  labeller = labeller(Site = site_short)
+) +
+  
+  # -------------------------------------------------------
+# Labels
+# -------------------------------------------------------
+
+labs(
+  x       = "Survey week",
+  y       = "Caterpillar occurrence probability",
+  #caption = paste0(
+  #  "Shaded region: cicada period (mid-May to early June).\n",
+  #  "Dashed vertical line marks end of cicada period.\n",
+  #  "Points and lines show observed weekly means averaged ",
+  #  "across branches and survey methods."
+  #)
+) +
+  
+  # -------------------------------------------------------
+# Theme
+# -------------------------------------------------------
+
+theme_bw(base_size = 11) +
+  theme(
+    panel.grid.minor  = element_blank(),
+    panel.grid.major  = element_line(linewidth = 0.3,
+                                     color     = "grey88"),
+    legend.position   = "bottom",
+    legend.direction  = "horizontal",
+    legend.key.width  = unit(2.2, "cm"),
+    legend.text       = element_text(size = 10),
+    strip.background  = element_rect(fill  = "grey95",
+                                     color = "grey70"),
+    strip.text        = element_text(size = 9, face = "bold"),
+    plot.caption      = element_text(size  = 8,
+                                     color = "grey45",
+                                     hjust = 0)
+  ) +
+  
+  # -------------------------------------------------------
+# Legend: single color legend with overridden aesthetics
+# so each key swatch shows the correct line weight,
+# line type, and point size for that year
+# -------------------------------------------------------
+
+guides(
+  color = guide_legend(
+    nrow         = 1,
+    override.aes = list(
+      linewidth = c(1.5, 0.7, 0.7),
+      linetype  = c("solid", "solid", "dashed"),
+      size      = c(2.3, 1.3, 1.3)
+    )
+  )
+)
+
+fig_weekly
+
+# ---------------------------------------------------------
+# Save
+# Height 9 inches accommodates 3 rows of panels plus
+# x-axis label and bottom legend comfortably.
+# Increase height to 10 if site name wrapping adds lines.
+# ---------------------------------------------------------
+
+ggsave(
+  "weekly_caterpillar_occurrence_by_site.pdf",
+  fig_weekly,
+  width  = 7.5,
+  height = 9.0,
+  units  = "in"
+)
+
+
+
 
 # -------------------------------------------------------
 # Site-level observed occurrence means for data overlay
@@ -446,7 +708,7 @@ p1 <- ggplot(pred_grid,
     x        = "Site cicada density index",
     y        = "Predicted caterpillar occurrence probability",
     color    = NULL,
-    caption  = "Lines: model predictions (cicada period, visual survey, mean week)\nPoints: observed site means"
+    #caption  = "Lines: model predictions (cicada period, visual survey, mean week)\nPoints: observed site means"
   ) +
   
   theme_bw(base_size = 12) +
@@ -531,7 +793,7 @@ p2 <- ggplot(preds_diff,
   labs(
     x       = "Site cicada density index",
     y       = "Cicada year vs. non-cicada average\n(log-odds difference)",
-    caption = "Positive values indicate relatively higher caterpillar\noccurrence in the cicada year at a given site density"
+    #caption = "Positive values indicate relatively higher caterpillar\noccurrence in the cicada year at a given site density"
   ) +
   
   theme_bw(base_size = 12)
@@ -607,7 +869,7 @@ p3 <- ggplot(emm_df,
     x       = NULL,
     y       = "Predicted caterpillar occurrence probability",
     color   = NULL,
-    caption = "Filled points and lines: model marginal means at mean cicada density\nOpen points: observed site means"
+    #caption = "Filled points and lines: model marginal means at mean cicada density\nOpen points: observed site means"
   ) +
   
   theme_bw(base_size = 12) +

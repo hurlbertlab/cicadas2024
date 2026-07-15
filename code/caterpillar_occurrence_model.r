@@ -42,7 +42,7 @@ dat = dataset %>%
   filter(julianday %in% 121:212) %>% # May 1 to July 31
   mutate(Period = ifelse(julianday >= 121 & julianday < 160, "cicada", "post_cicada"),
          Site = factor(Name),
-         Week = (julianday - 4)/7) %>% 
+         Week = ceiling((julianday - 4)/7)) %>% 
   left_join(cicadaLevels, by = 'Name')
   
 
@@ -347,15 +347,15 @@ library(scales)
 
 year_colors_occ  <- c("2024" = "#CC3311",
                       "2025" = "#5B8DB8",
-                      "2026" = "#A8C4D8")
+                      "2026" = "#5B8DB8")
 
 year_labels_occ  <- c("2024" = "2024 (cicada year)",
                       "2025" = "2025 (year +1)",
                       "2026" = "2026 (year +2)")
 
-year_linewidths  <- c("2024" = 1.5, "2025" = 0.7, "2026" = 0.7)
+year_linewidths  <- c("2024" = 1.5, "2025" = 0.9, "2026" = 0.9)
 year_linetypes   <- c("2024" = "solid", "2025" = "solid",  "2026" = "dashed")
-year_pointsizes  <- c("2024" = 2.3,    "2025" = 1.3,       "2026" = 1.3)
+year_pointsizes  <- c("2024" = 2.3,    "2025" = 1.8,       "2026" = 1.8)
 
 # ---------------------------------------------------------
 # Weekly observed occurrence rates
@@ -373,7 +373,7 @@ year_pointsizes  <- c("2024" = 2.3,    "2025" = 1.3,       "2026" = 1.3)
 # ---------------------------------------------------------
 
 weekly_occ <- dat %>%
-  group_by(Site, Year, Week) %>%
+  group_by(Site, Year, julianday) %>%
   summarise(
     mean_occ = mean(occurrence),
     n_obs    = n(),
@@ -384,7 +384,10 @@ weekly_occ <- dat %>%
     # last so it sits on top where lines overlap
     Year = factor(Year, levels = c("2025", "2026", "2024")),
     Site = factor(Site)
-  )
+  ) %>%
+  filter(n_obs > 40,
+         Site != "UNC Chapel Hill Campus"   #optional to focus on 4 panels
+         ) # filter out some days with just a few random surveys
 
 # ---------------------------------------------------------
 # Cicada period bounds for background shading
@@ -397,16 +400,11 @@ weekly_occ <- dat %>%
 # visual comparison.
 # ---------------------------------------------------------
 
-cicada_bounds <- dat %>%
-  filter(Period == "cicada") %>%
-  summarise(
-    xmin = min(Week) - 0.4,
-    xmax = max(Week) + 0.4
-  )
+cicadaWeekBegin = 18
+cicadaWeekEnd = 22
 
-cat("Cicada period shading spans weeks",
-    cicada_bounds$xmin + 0.4, "to",
-    cicada_bounds$xmax - 0.4, "\n")
+cicadaDayBegin = 121
+cicadaDayEnd = 160
 
 # ---------------------------------------------------------
 # Optional: abbreviated site labels
@@ -417,7 +415,7 @@ cat("Cicada period shading spans weeks",
 #
 site_short <- c(
    "Triangle Land Conservancy - Johnston Mill Nature Preserve" = "Johnston Mill",
-   "UNC Chapel Hill Campus" = "UNC Chapel Hill",
+   #"UNC Chapel Hill Campus" = "UNC Chapel Hill",
    "Eno River State Park" = "Eno River State Park",
    "NC Botanical Garden" = "NC Botanical Garden",
    "Prairie Ridge Ecostation" = "Prairie Ridge Ecostation"
@@ -432,7 +430,7 @@ site_short <- c(
 
 fig_weekly <- ggplot(
   weekly_occ,
-  aes(x     = Week,
+  aes(x     = julianday,
       y     = mean_occ,
       color = Year,
       group = Year)
@@ -440,28 +438,15 @@ fig_weekly <- ggplot(
   
   # Cicada period background shading
   # annotate() applies identically to all facets
-  # Warm tint coordinates with the 2024 red line
   annotate(
     "rect",
-    xmin  = cicada_bounds$xmin,
-    xmax  = cicada_bounds$xmax,
+    xmin  = cicadaDayBegin,
+    xmax  = cicadaDayEnd,
     ymin  = -Inf,
     ymax  = Inf,
     fill  = "gray90",
     alpha = 0.65
   ) +
-  
-  # Vertical reference line at cicada period end
-  #annotate(
-  #  "segment",
-  #  x         = cicada_bounds$xmax,
-  #  xend      = cicada_bounds$xmax,
-  #  y         = -Inf,
-  #  yend      = Inf,
-  #  color     = "grey55",
-  #  linewidth = 0.4,
-  #  linetype  = "dashed"
-  #) +
   
   # Lines — linewidth and linetype vary by year
   geom_line(aes(linewidth = Year,
@@ -520,7 +505,7 @@ facet_wrap(
 # -------------------------------------------------------
 
 labs(
-  x       = "Survey week",
+  x       = "Day of year",
   y       = "Caterpillar occurrence probability",
   #caption = paste0(
   #  "Shaded region: cicada period (mid-May to early June).\n",

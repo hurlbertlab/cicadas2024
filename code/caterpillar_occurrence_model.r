@@ -444,7 +444,7 @@ fig_weekly <- ggplot(
     xmax  = cicadaDayEnd,
     ymin  = -Inf,
     ymax  = Inf,
-    fill  = "gray90",
+    fill  = "gray85",
     alpha = 0.65
   ) +
   
@@ -607,7 +607,7 @@ site_year_period_means$cicada_density_orig <- site_year_period_means$cicadaIndex
 # -------------------------------------------------------
 # Consistent color scheme and labels used across all plots
 # -------------------------------------------------------
-year_colors <- c("2024" = "#D55E00",   # orange-red: cicada year
+year_colors <- c("2024" = "#CC3311",   # orange-red: cicada year
                  "2025" = "#0072B2",   # blue: year+1
                  "2026" = "#009E73")   # teal: year+2
 
@@ -673,7 +673,7 @@ p1 <- ggplot(pred_grid,
               alpha = 0.15, color = NA) +
   
   # Prediction lines
-  geom_line(linewidth = 1.0) +
+  geom_line(linewidth = 2.0) +
   
   # Observed site-year means overlaid as points
   # With 5 sites these are legible and add transparency about the
@@ -691,14 +691,14 @@ p1 <- ggplot(pred_grid,
   
   labs(
     x        = "Site cicada density index",
-    y        = "Predicted caterpillar occurrence probability",
+    y        = "Caterpillar occurrence",
     color    = NULL,
     #caption  = "Lines: model predictions (cicada period, visual survey, mean week)\nPoints: observed site means"
   ) +
   
-  theme_bw(base_size = 12) +
+  theme_bw(base_size = 30) +
   theme(legend.position = "bottom",
-        legend.text      = element_text(size = 10))
+        legend.text      = element_text(size = 16))
 
 p1
 

@@ -696,6 +696,8 @@ p1 <- ggplot(pred_grid,
     #caption  = "Lines: model predictions (cicada period, visual survey, mean week)\nPoints: observed site means"
   ) +
   
+  coord_cartesian(ylim = c(0, 0.13)) +
+  
   theme_bw(base_size = 30) +
   theme(legend.position = "bottom",
         legend.text      = element_text(size = 16))

@@ -828,15 +828,15 @@ p3 <- ggplot(emm_df,
   
   # Confidence intervals
   geom_errorbar(aes(ymin = lower_95, ymax = upper_95),
-                width    = 0.08,
+                width    = 0.3,
                 position = position_dodge(width = 0.15)) +
   
   # Connecting lines
   geom_line(position = position_dodge(width = 0.15),
-            linewidth = 0.9) +
+            linewidth = 2) +
   
   # Marginal mean points
-  geom_point(size     = 3,
+  geom_point(size     = 4,
              position = position_dodge(width = 0.15)) +
   
   # Observed site means overlaid as smaller, semi-transparent points
@@ -854,12 +854,12 @@ p3 <- ggplot(emm_df,
   
   labs(
     x       = NULL,
-    y       = "Predicted caterpillar occurrence probability",
+    y       = "Caterpillar occurrence",
     color   = NULL,
     #caption = "Filled points and lines: model marginal means at mean cicada density\nOpen points: observed site means"
   ) +
   
-  theme_bw(base_size = 12) +
+  theme_bw(base_size = 30) +
   theme(legend.position = "bottom",
         legend.text      = element_text(size = 10))
 

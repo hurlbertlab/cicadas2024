@@ -269,13 +269,27 @@ print(round(coefs_bird[, c("Estimate", "Std. Error", "Pr(>|z|)")], 3))
 # =========================================================
 
 # Year × Period marginal means
-emm_bird_YP <- emmeans(m_bird1,
+emm_bird_YP <- emmeans(m_bird0b,
                        specs = ~ Period | Year,
                        type  = "response",
-                       at    = list(cicadaIndex_c = 0,
-                                    bout_doy_c        = 0))
+                       at    = list(cicadaIndex_c = 0))
 print(emm_bird_YP)
 pairs(emm_bird_YP, reverse = TRUE)
+
+
+emm_bird_df <- as.data.frame(emm_bird_YP) %>%
+  rename(predicted = prob,
+         lower_95  = asymp.LCL,
+         upper_95  = asymp.UCL) %>%
+  mutate(
+    Period_label = factor(
+      Period,
+      levels = c("cicada", "post_cicada"),
+      labels = c("Cicada\nperiod", "Post-cicada\nperiod")
+    ),
+    Year = factor(Year, levels = c("2024", "2025", "2026"))
+  )
+
 
 # Predicted strike rate across cicada density gradient by year
 pred_grid_bird <- expand.grid(
@@ -285,13 +299,12 @@ pred_grid_bird <- expand.grid(
   Year          = factor(c("2024", "2025", "2026"),
                          levels = levels(dat_clay$Year)),
   Period        = factor("cicada",
-                         levels = levels(dat_clay$Period)),
-  bout_doy_c        = 0
+                         levels = levels(dat_clay$Period))
 )
 
 contrasts(pred_grid_bird$Year) <- contrasts(dat_clay$Year)
 
-preds_bird <- predict(m_bird1,
+preds_bird <- predict(m_bird0b,
                       newdata = pred_grid_bird,
                       type    = "link",
                       se.fit  = TRUE,
@@ -306,3 +319,76 @@ pred_grid_bird <- pred_grid_bird %>%
     predicted       = plogis(fit),
     cicada_density_orig = cicadaIndex_c + cicada_center
   )
+
+
+###################################################
+# Plotting
+###################################################
+
+# --- Bird strike ~ cicada density ---
+pB <- ggplot(pred_grid_bird,
+             aes(x = cicada_density_orig, y = predicted,
+                 color = Year, fill = Year)) +
+  geom_ribbon(aes(ymin = lower_95, ymax = upper_95),
+              alpha = 0.15, color = NA) +
+  geom_line(linewidth = 2.0) +
+  geom_point(data  = site_means_bird,
+             aes(x = cicada_density_orig,
+                 y = mean_strike),
+             size  = 2.5, shape = 16) +
+  scale_color_manual(values = year_colors, labels = year_labels) +
+  scale_fill_manual( values = year_colors, labels = year_labels,
+                     guide  = "none") +
+  scale_y_continuous(labels = percent_format(accuracy = 1),
+                     limits = c(0, NA)) +
+  labs(
+    x     = "Site cicada density index",
+    y     = "Bird strike probability",
+    color = NULL
+  ) +
+  theme_bw(base_size = 24) +
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.title       = element_text(size = 24)
+    #plot.title       = element_text(size = 11, face = "bold")
+  )
+
+pB
+
+pD <- ggplot(emm_bird_df,
+             aes(x     = Period_label,
+                 y     = predicted,
+                 color = Year,
+                 group = Year)) +
+  geom_errorbar(aes(ymin = lower_95, ymax = upper_95),
+                width    = 0.08,
+                position = position_dodge(width = 0.25)) +
+  geom_line(position = position_dodge(width = 0.25),
+            linewidth = 2) +
+  geom_point(size     = 2.5,
+             position = position_dodge(width = 0.25)) +
+  geom_point(data     = site_period_bird,
+             aes(x    = Period_label,
+                 y    = mean_strike,
+                 color = Year),
+             size     = 1.5,
+             alpha    = 0.5,
+             shape    = 1,
+             position = position_dodge(width = 0.25)) +
+  scale_color_manual(values = year_colors, labels = year_labels) +
+  scale_y_continuous(labels = percent_format(accuracy = 1),
+                     limits = c(0, NA)) +
+  labs(
+    x     = NULL,
+    y     = "Bird strike probability",
+    color = NULL
+  ) +
+  theme_bw(base_size = 24) +
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.title       = element_text(size = 24)
+    #plot.title       = element_text(size = 11, face = "bold")
+  )
+
+pD
+

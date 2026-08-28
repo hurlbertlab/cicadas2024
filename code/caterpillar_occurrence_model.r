@@ -11,7 +11,7 @@ library(dplyr)     # Data manipulation
 # =========================================================
 
 # Temporary reading in of CC data for 5 sites for 2024-2026
-dataset = read.csv('../caterpillars-analysis-public/data/fullDataset_2026-07-14.csv') %>%
+dataset = read.csv('../caterpillars-analysis-public/data/fullDataset_2026-08-17.csv') %>%
   filter(Name %in% c("Eno River State Park",
                      "Triangle Land Conservancy - Johnston Mill Nature Preserve",
                      "NC Botanical Garden",

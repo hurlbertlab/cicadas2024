@@ -122,7 +122,7 @@ grid_cat_dens <- expand.grid(
 )
 contrasts(grid_cat_dens$Year) <- contrasts(dat$Year)
 
-preds_cat_dens <- predict(m2,
+preds_cat_dens <- predict(m1,
                           newdata = grid_cat_dens,
                           type    = "link",
                           se.fit  = TRUE,
@@ -170,7 +170,7 @@ grid_bird_dens <- grid_bird_dens %>%
 # --- Panel C: Caterpillar occurrence ---
 # ObservationMethod held at "Visual" for interpretability;
 # averaging over methods would be equally defensible
-emm_cat_YP <- emmeans(m2,
+emm_cat_YP <- emmeans(m1,
                       specs = ~ Period | Year,
                       type  = "response",
                       at    = list(cicadaIndex_c     = 0,

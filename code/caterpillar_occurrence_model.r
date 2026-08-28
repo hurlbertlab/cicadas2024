@@ -142,9 +142,9 @@ m1 <- glmmTMB(
     
     # --- Site-level dose-response ------------------------------------------
   
-  cicadaIndex_c +
-    # Does between-site variation in cicada density predict overall caterpillar
-    # occurrence across all years and periods?
+  Year * cicadaIndex_c +   # Does between-site variation in cicada density predict 
+    # caterpillar occurrence does the magnitude of that effect differ between
+    # the cicada year and the average of the two non-cicada years?
     # CAUTION: this effect is estimated from between-site variation at 5 sites
     # only. Confidence intervals will appear precise but should be interpreted
     # cautiously — see Section 3 and accompanying notes.
@@ -232,6 +232,8 @@ if (nrow(example) >= 6) {
 # If autocorrelation at lag 1 is substantial (|r| > ~0.2),
 # consider the AR(1) extension in Section 5.
 
+# Autocorrelation is very low |r| < 0.08 at lags > 0
+
 # =========================================================
 # SECTION 4: INTERPRETATION
 # =========================================================
@@ -288,36 +290,6 @@ plot(predicted ~ cicadaIndex_c, data = density_range, type = "l",
      ylab = "Predicted caterpillar occurrence probability",
      main = "Cicada density effect (cicada period, 2024, Visual survey)")
 
-# =========================================================
-# SECTION 5: OPTIONAL EXTENSIONS
-# =========================================================
-
-# ---------------------------------------------------------
-# 5a. Year x Cicada Density interaction (dose-response test)
-# ---------------------------------------------------------
-# Tests whether the between-year difference in caterpillar occurrence
-# scales with site-level cicada density.
-# This adds 2 coefficients (2 Year contrasts x cicadaIndex_c).
-# Treat as EXPLORATORY given only 5 sites.
-
-m2 <- glmmTMB(
-  occurrence ~
-    Year * Period +
-    Year * cicadaIndex_c +   # Does the cicada year effect on caterpillar
-    # occurrence scale with cicada density?
-    Week_c +
-    ObservationMethod +
-    (1 | Site) +
-    (1 | PlantFK),
-  data   = dat,
-  family = binomial(link = "logit")
-)
-
-AIC(m1, m2) 
-
-# Support for Model2
-
-summary(m2)
 
 # ==============================================
 # SECTION 6: GRAPHING
@@ -641,7 +613,7 @@ contrasts(pred_grid$Year) <- contrasts(dat$Year)
 # Predict on link scale, then transform manually so CIs are
 # computed on log-odds scale before back-transforming —
 # this ensures CIs are bounded within [0,1]
-preds <- predict(m2,
+preds <- predict(m1,
                  newdata  = pred_grid,
                  type     = "link",
                  se.fit   = TRUE,
@@ -725,7 +697,7 @@ make_preds <- function(yr) {
     ObservationMethod = factor("Visual", levels = levels(dat$ObservationMethod))
   )
   contrasts(grid$Year) <- contrasts(dat$Year)
-  p <- predict(m2, newdata = grid, type = "link",
+  p <- predict(m1, newdata = grid, type = "link",
                se.fit = TRUE, re.form = NA)
   data.frame(cicadaIndex_c = cicada_seq,
              fit = p$fit, se = p$se.fit, Year = yr)
@@ -795,7 +767,7 @@ p2
 # averaged over survey method
 # -------------------------------------------------------
 
-emm_YP <- emmeans(m2,
+emm_YP <- emmeans(m1,
                   specs = ~ Period | Year,
                   type  = "response",
                   at    = list(cicadaIndex_c = 0, Week_c = 0))

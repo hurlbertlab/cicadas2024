@@ -5,6 +5,7 @@ library(lubridate)
 library(stringr)
 library(glmmTMB)
 library(emmeans)
+library(ggplot2)
 
 # Cicada density index by site data
 cicadaLevels = read.csv("data/cicada_noise_by_site_on_day143.csv") %>%
@@ -167,7 +168,7 @@ m_bird1 <- glmmTMB(
     #
     # CRITICAL SIGN CHECK with caterpillar occurrence model:
     # If Yearcicada_vs_noncicada:cicadaIndex_c is NEGATIVE here
-    # and was POSITIVE in the caterpillar occurrence model (m2),
+    # and was POSITIVE in the caterpillar occurrence model (m1),
     # the two results are mechanistically coherent:
     # more cicadas → fewer bird strikes → more caterpillars.
     
@@ -255,7 +256,7 @@ key_terms <- c("Yearcicada_vs_noncicada:cicadaIndex_c",
                "Yearyr1_vs_yr2",
                "Periodpost_cicada")
 
-coefs_caterpillar <- summary(m2)$coefficients$cond[key_terms, ]
+coefs_caterpillar <- summary(m1)$coefficients$cond[key_terms, ]
 coefs_bird        <- summary(m_bird0b)$coefficients$cond[key_terms, ]
 
 cat("\nCaterpillar occurrence model:\n")

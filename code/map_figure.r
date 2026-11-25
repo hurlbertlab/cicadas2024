@@ -100,7 +100,9 @@ sites = data.frame(name = c("Johnston Mill", "NC Botanical Garden",
                             "Eno River State Park", "UNC Chapel Hill",
                             "Prairie Ridge Ecostation"),
                    code = c("JOMI", "NCBG", "ERSP", "UNCH", "PREC"),
-                   longitude = sitemat[,1], latitude = sitemat[,2])
+                   longitude = sitemat[,1], latitude = sitemat[,2],
+                   xoffset = c(0, .035, 0, -0.035, 0),
+                   yoffset = c(.015, -0.015, .015, -0.013, 0.015))
 
 # Cities
 cities_df <- data.frame(
@@ -111,10 +113,63 @@ cities_df <- data.frame(
 
 cities_vect <- vect(cities_df, geom = c("lon", "lat"), crs = "EPSG:4326")
 
-plot(nlcd_3class)
-points(cities_vect, pch = 17, cex = 1.4)
-text(cities_df$lon, cities_df$lat + 0.015, cities_df$name, cex = 1.5)
+plot(nlcd_3class, legend = FALSE)
+points(cities_vect, pch = 17, cex = 2)
+text(cities_df$lon, cities_df$lat + 0.015, cities_df$name, cex = 1.25)
 
-points(sites$longitude, sites$latitude, pch = 16, cex = 1.5)
+points(sites$longitude, sites$latitude, pch = 16, cex = 1.5, col = 'red')
+text(sites$longitude + sites$xoffset, sites$latitude + sites$yoffset, sites$code, cex = 1.8)
+
+# Add a 50 km scale bar in the bottom-left corner (over land in SC/NC border area)
+sbar(
+  d = 20,               # Length in kilometers (terra uses km by default for lon/lat)
+  xy = "bottomleft" ,   # Exact lon/lat placement (or use "bottomleft")
+  type = "bar",         # Alternates black and white segments
+  divs = 4,             # Splits into 4 segments
+  below = "km",         # Places "km" unit label underneath
+  cex = 0.75,
+  halo = TRUE           # White outline so text is readable over dark green/blue
+)
 
 
+# 2. Prepare Eastern US State Boundaries for the Inset
+us_states_raw <-  st_as_sf(maps::map("state", plot = FALSE, fill = TRUE))
+us_states <- terra::vect(us_states_raw)
+crs(us_states) <- "EPSG:4326"
+
+# Crop states to the Eastern US region around NC
+east_us <- crop(us_states, ext(-85, -73, 30, 41))
+
+# Isolate North Carolina to highlight it inside the inset
+nc_region <- crop(us_states, ext(-84.6, -75, 33.4, 37.2))
+nc_state <- east_us[east_us$ID == "north carolina", ]
+
+# Convert your main raster's bounding box into a SpatVector polygon
+study_box <- as.polygons(ext(nlcd_3class), crs = "EPSG:4326")
+
+# 3. Draw the Inset in the Upper-Right Corner using par(fig)
+op <- par(no.readonly = TRUE)
+
+# [x1, x2, y1, y2] in 0-1 device coordinates (tweak x1/x2 slightly if near the legend)
+par(fig = c(0.66, 0.92, 0.74, 0.95), new = TRUE, mar = c(0, 0, 0, 0))
+
+# Draw white background rectangle first so the inset isn't transparent over forest/gray
+plot(ext(nc_region), col = "white", border = NA, axes = FALSE, mar = 0)
+plot(nc_region, col = "gray92", border = "gray60", add = TRUE)
+plot(nc_state, col = "gray78", border = "gray25", lwd = 1.2, add = TRUE)
+plot(study_box, border = "red", col = rgb(1, 0, 0, 0.25), lwd = 2, add = TRUE)
+#box(col = "black", lwd = 1.2)
+
+# Add a compact 200 km scale bar in the ocean area of the inset
+sbar(
+  d = 200,                # 200 km total length
+  xy = c(-84, 34),    # Bottom-right ocean space inside nc_region
+  type = "line",          # Simple clean line (less cluttered in small insets than "bar")
+  label = c(0, "", 200),  # Label only the ends so text doesn't crowd
+  below = "km",
+  cex = 0.65,             # Smaller font size proportional to the inset
+  lwd = 1.5
+)
+
+
+par(op) # Restore original graphics parameters

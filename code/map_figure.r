@@ -1,8 +1,13 @@
+# Script for making a map of the study area indicating spatial variation in forest cover
+# from NLCD, and locations of 5 study sites in relation to 3 cities.
+
 library(tigris)
 library(sf)
 library(terra)
 library(curl)
+library(maps)
 
+# PART I - Get National Land Cover Data for central North Carolina
 # 1. Set desired year (any year from 1985 to 2025)
 yr <- 2025
 
@@ -34,8 +39,8 @@ nc_nlcd <- crop(nlcd_us, nc_vect, mask = TRUE)
 plot(nc_nlcd, main = paste("North Carolina Land Cover", yr))
 writeRaster(nc_nlcd, sprintf("NC_NLCD_%d.tif", yr), overwrite = TRUE)
 
-#################################################################################
-# Crop the NLCD to an arbitrary lat-long bounding box (and project to geographic)
+
+# PART II - Crop the NLCD to an arbitrary lat-long bounding box (and project to geographic)
 # 1. Define your exact target extent in WGS84 lat/long (xmin, xmax, ymin, ymax)
 target_ext <- ext(-79.2, -78.6, 35.75, 36.15)
 
@@ -58,8 +63,8 @@ print(nlcd_rect)
 plot(nlcd_rect, main = "NLCD 2025 (WGS84 Geographic Rectangle)")
 writeRaster(nlcd_rect, "NC_BBox_WGS84_NLCD_2025.tif", overwrite = TRUE)
 
-#############################################################################
-# Reclassify to 3 land cover classes: water, forest, non-forest
+
+# PART III - Reclassify to 3 land cover classes: water, forest, non-forest
 # 1. Create a reclassification matrix: [from, to, new_value]
 # New classes: 1 = Water, 2 = Forest, 3 = Other
 rcl_matrix <- matrix(c(
@@ -89,7 +94,8 @@ plot(nlcd_3class, main = "Land Cover: Water, Forest & Other (2025)")
 writeRaster(nlcd_3class, "NC_Geographic_3Class_2025.tif", overwrite = TRUE)
 
 
-
+# PART IV - Field site and city locations and attribures
+# Field sites
 sitemat = matrix(c(-79.0492, 35.9907,
           -79.0339, 35.8994,
           -79.0072, 36.0769,
@@ -112,6 +118,12 @@ cities_df <- data.frame(
 )
 
 cities_vect <- vect(cities_df, geom = c("lon", "lat"), crs = "EPSG:4326")
+
+
+# PART V - Make map
+png('figures/Figure2_map.png', height = 2400, width = 3200, res = 300)
+
+par(cex = 1.3)
 
 plot(nlcd_3class, legend = FALSE)
 points(cities_vect, pch = 17, cex = 2)
@@ -151,7 +163,7 @@ study_box <- as.polygons(ext(nlcd_3class), crs = "EPSG:4326")
 op <- par(no.readonly = TRUE)
 
 # [x1, x2, y1, y2] in 0-1 device coordinates (tweak x1/x2 slightly if near the legend)
-par(fig = c(0.66, 0.92, 0.74, 0.95), new = TRUE, mar = c(0, 0, 0, 0))
+par(fig = c(0.62, 0.88, 0.71, 0.92), new = TRUE, mar = c(0, 0, 0, 0))
 
 # Draw white background rectangle first so the inset isn't transparent over forest/gray
 plot(ext(nc_region), col = "white", border = NA, axes = FALSE, mar = 0)
@@ -171,5 +183,5 @@ sbar(
   lwd = 1.5
 )
 
-
+dev.off()
 par(op) # Restore original graphics parameters
